@@ -6,31 +6,35 @@ cat << _EOF_
 Manage multiple Node.js' Tiddlywikis from this hub
 
 Usage:
-  tidhub [option [argument]]
+  tidhub.sh [option [argument]]
 
 Options and their argument:
-  [-h|--help]  print this document and exit (default)
-  [-l|--list]  list all available wikis with a R flag if running
-  [-r|--run]   a|# run all wikis or just this # (default from config file)
-  [-s|--stop]  a|# stop all running wikis (default) or just this #
+  [-h|--help]           print this document and exit (default)
+  [-l|--list]           list all available wikis with a R flag if running
+  [-r|--run]  a|keylist run all wikis or just this keylist (default first from list)
+  [-s|--stop] a|keylist stop all running wikis (default) or just this keylist
+  keylist
+		is a list of keys indexes in 'tiddirs' array as defined in 'tidhubrc' file (see below)
 
 Usage examples:
-  tidhub -l       list wikis
-  tidhub -r 1 3   run wiki 1 and 3
-  tidhub -s 1     stop wiki 1
+  tidhub -l          list wikis
+  tidhub -r hnts 3   run wiki identified by key 'hnts' and 3
+  tidhub -s 3        stop wiki identified by key 3
 
 Config file tidhubrc:
   Tidhub makes use of ~./config/tidhub/tidhubrc file that must exist and be readable.
-  It declares bash array of absolute paths to tiddliwiki directories.
+  It declares bash associative array of key - values pair,
+	where key is an unique identifier (name) of wiki and value is the path.
   Example of tidhubrc file:
 
-# some comment
-# and another one
-tiddirs=(
-"~/Notes/home_notes/"
-"~/Notes/work_notes/"
-"~/Training/my_journal/"
-)
+# This file is to be sourced from tidhub.sh
+declare -A tiddirs
+# Index of tiddirs is the unique identifier (key) of the concrete Tiddlywiki instance
+# User definitions:
+tiddirs[hnts]="~/Notes/home_notes/"
+tiddirs[wnts]="~/Notes/work_notes/"
+tiddirs[train]="~/Training/my_journal/"
+tidddirs[3]="~/Todo/"
 _EOF_
 		exit
 }
@@ -56,8 +60,7 @@ get_opt_arg () {
 			# now read $2 arguments
 			;;
 		*)
-			echo "Unregognized '$1' input." >&2
-			usage
+			[[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
 			;;
 	esac
 }

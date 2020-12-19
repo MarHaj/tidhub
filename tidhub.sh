@@ -22,7 +22,7 @@ Options and their argument:
   [-r|--run]  a|keylist run all wikis or just this keylist (default first from list)
   [-s|--stop] a|keylist stop all running wikis (default) or just this keylist
   keylist
-		is a list of keys indexes in 'tiddirs' array as defined in 'tidhubrc' file (see below)
+    is a list of keys indexes in 'tiddirs' array as defined in 'tidhubrc' file (see below)
 
 Usage examples:
   tidhub -l          list wikis
@@ -32,7 +32,7 @@ Usage examples:
 Config file tidhubrc:
   Tidhub makes use of ~./config/tidhub/tidhubrc file that must exist and be readable.
   It declares bash associative array of key=values pair,
-	where key is an unique identifier (name) of the wiki and value is path to it.
+  where key is an unique identifier (name) of the wiki and value is path to it.
 
 Example of tidhubrc file:
 
@@ -45,7 +45,7 @@ declare -A tiddirs
 tiddirs[hnts]="~/Notes/home_notes/"
 tiddirs[wnts]="~/Notes/work_notes/"
 tiddirs[train]="~/Training/my_journal/"
-tidddirs[3]="~/Todo/"
+tiddirs[3]="~/Todo/"
 
 Requirements:
   External programs required:
@@ -115,33 +115,29 @@ stop_wikis () {
 }
 ########################################
 
+
 ########################################
-# Get program options and args from positional parameters
-# calling: get_opt_arg $@
+### Main
 ########################################
-get_opt_arg () {
-	case $1 in
-		-h | --help)
-			 usage
-			;;
-		-l | --list)
-			list_wikis
-			;;
-		-r | --run)
-			shift
-			run_wikis $@
-			;;
-		-s | --stop) #
-			shift
-			stop_wikis $@
-			;;
-		*)
-			[[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
-			;;
-	esac
-	exit
-}
+case $1 in
+	-h | --help)
+		 usage
+		;;
+	-l | --list)
+		list_wikis
+		;;
+	-r | --run)
+		shift
+		run_wikis $@
+		;;
+	-s | --stop) #
+		shift
+		stop_wikis $@
+		;;
+	*)
+		[[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
+		;;
+esac
+exit
 ########################################
 
-# Tests
-get_opt_arg $@

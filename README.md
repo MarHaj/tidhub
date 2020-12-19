@@ -1,21 +1,28 @@
 # Tidhub
 
-Running several (Tiddly)wikis under Node.js from a command line is sometimes pain kind of the pain in the ass.
+Running several (Tiddly)wikis under Node.js from a command line is sometimes kind of pain in the ass. Especially if you use many terminals and forgot from which one you run them.
 
-Tidhub is a bash script that
+Tidhub is a simple bash script that
 
-* keeps central list of user wikis in $HOME/.config/Tidhub/tidhubrc
-* it enables the following operations with them:
-	* listen to wiki (node.js command: tiddlywiki -- listen)
-  * list running wikis
-	* kill wikis gently (aka unlisten)
+* keeps central list of user defined wikis in ~/.config/Tidhub/tidhubrc
+* enables following operations with those preconfigured wikis:
+	* run all|selected wikis (node.js command: tiddlywiki --listen)
+  * make a list of all preconfigured wikis with R flag if running
+	* stop all|selected wikis (kill gently)
 
 ## Requirements
 
-* tiddlywiki under Node.js (obviously)
-* pgrep utility
-* awk
+* Tiddlywiki under Node.js (obviously)
+* bash >= 4
+* awk, pgrep, pkill utilities
 
 ## Timeline
 
 * Project started on 2020-12-19.
+
+## Acknowledgement
+
+Special thanks to
+
+* Node.js Tiddlywiki developers - running several wikis on my desktop is easy as going to the hell (going to the heaven is rather difficult, isn't it?)
+* Fossil VCS developers - my projects versions control is fun childish play.

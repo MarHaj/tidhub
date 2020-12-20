@@ -7,16 +7,15 @@
 rcfile=~/.config/tidhub/tidhubrc
 rctempl="# This file is to be sourced from tidhub.sh
 
-declare -A tiddirs # do NOT change this
+declare -A wiki # do NOT change this
 
-# User tiddirs array definition:
-# Index is the unique user defined identifier (key) of the wiki instance
+# User wiki array definition wiki[key]=value:
+# Key is the unique user defined identifier of the wiki instance
 # Value is the path to the wiki instance dir
-tiddirs[hnts]=~/Notes/home_notes/
-tiddirs[wnts]=~/Notes/work_notes/
-tiddirs[train]=~/Training/my_journal/
-tiddirs[3]=~/Todo/
-"
+wiki[hnts]=~/Notes/home_notes/
+wiki[wnts]=~/Notes/work_notes/
+wiki[train]=~/Training/my_journal/
+wiki[3]=~/Todo/"
 
 
 ########################################
@@ -47,7 +46,7 @@ check_rc () {
 	if [[ ! -r "${rcfile}" ]]; then
 		[[ -d "${rcdir}" ]] || mkdir "${rcdir}" # mkdir if necessary
 		echo "Required config file $rcfile is missing, so I'm creating it."
-		echo "You should edit it to reflect your own wikis placement."
+		echo -e "You should edit it to reflect your own wikis placement.\n"
 		echo "$rctempl" > "${rcfile}"
 	fi
 }
@@ -59,7 +58,7 @@ check_rc () {
 usage (){
 
 cat << _EOF_
-Manage multiple Node.js' Tiddlywikis from this hub
+Purpose: Manage multiple Node.js' Tiddlywikis from this hub
 
 Usage:
   tidhub.sh [option [argument]]
@@ -67,23 +66,25 @@ Usage:
 Options and their argument:
   [-h|--help]           print this document (default)
   [-l|--list]           list all available wikis with a R flag if running
-  [-r|--run]  a|keylist run all wikis or just this keylist (default first from list)
-  [-s|--stop] a|keylist stop all running wikis (default) or just this keylist
-  keylist               is a list of keys indexes in 'tiddirs' array
-                        which is defined in 'tidhubrc' file (see below)
+  [-r|--run]  [keylist] run all wikis (default) or just those in the keylist
+  [-s|--stop] [keylist] stop all running wikis (default) or just those in the keylist
+  keylist               is a list of keys in 'wiki' array
+                        defined in 'tidhubrc' file (details see below)
 
 Usage examples:
-  tidhub -l          list wikis
-  tidhub -r hnts 3   run wiki identified by the key 'hnts' and 3
-  tidhub -s 3        stop wiki identified by the key 3
+  tidhub -l          list wikis: key, pid, port
+  tidhub -r hnts 3   run wikis identified by the key 'hnts' and '3'
+  tidhub -s 3        stop wiki identified by the key '3'
 
 Config file '${rcfile##*/}':
-  Tidhub makes use of '~/${rcfile#/*/*/}' file that must exist and be readable.
+  Tidhub makes use of '~/${rcfile#/*/*/}' file.
+  If it does'not exist it will be automatically created from the template.
+  You have to edit it to reflect your own wikis placement.
   It declares bash associative array of key=values pair,
-  where 'key' is the unique identifier (name) of the wiki and
+  where 'key' is the unique identifier (shorcut) of the wiki and
         'value' is the path to it.
 
-Example of '${rcfile##*/}' file content:
+Example (template) of '${rcfile##*/}' file content:
 --------------------------------------
 ${rctempl}
 --------------------------------------
@@ -95,16 +96,16 @@ _EOF_
 ########################################
 
 ########################################
-# List wikis and mark Running ones
+# List status of configured wikis: key pid port
 #
 # Globals:
-#   tiddirs used
+#   wiki used
 #
 # Arguments
 #   none
 #
 # Outputs:
-#   list of wikis: key pid port R-flag
+#   list of wikis: key pid port
 #
 # Returns:
 #   none
@@ -118,10 +119,10 @@ list_wikis () {
 # Run all/selected wikis
 #
 # Globals:
-#   tiddirs used
+#   wiki used
 #
 # Arguments
-#   [a|keylist] wikis to run
+#   [keylist] of wikis to run, default is all
 #
 # Outputs:
 #   input
@@ -138,10 +139,10 @@ run_wikis () {
 # Stop all/selected wikis
 #
 # Globals:
-#   tiddirs used
+#   wiki used
 #
 # Arguments
-#   [a|keylist] wikis to stop
+#   [keylist] of wikis to stop, default is all
 #
 # Outputs:
 #   none

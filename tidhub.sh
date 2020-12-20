@@ -1,9 +1,57 @@
 #!/bin/bash
 
 ########################################
+### Global constats/variables
+########################################
+
+rcfile=~/.config/tidhub/tidhubrc
+rctempl="# This file is to be sourced from tidhub.sh
+
+declare -A tiddirs # do NOT change this
+
+# User tiddirs array definition:
+# Index is the unique user defined identifier (key) of the wiki instance
+# Value is the path to the wiki instance dir
+tiddirs[hnts]=~/Notes/home_notes/
+tiddirs[wnts]=~/Notes/work_notes/
+tiddirs[train]=~/Training/my_journal/
+tiddirs[3]=~/Todo/
+"
+
+
+########################################
 ### Functions definition
 ########################################
 
+
+########################################
+# Check existence of rcfile and
+# create it from the template if doesn't exist
+#
+# Globals:
+#   rcfile used
+#   rctempl used
+#
+# Arguments
+#   none
+#
+# Outputs:
+#		STDOUT message about creating rcfile
+#   rcfile create it if does not exist
+#
+# Returns:
+#   none
+########################################
+check_rc () {
+	local rcdir="${rcfile%/*}"
+	if [[ ! -r "${rcfile}" ]]; then
+		[[ -d "${rcdir}" ]] || mkdir "${rcdir}" # mkdir if necessary
+		echo "Required config file $rcfile is missing, so I'm creating it."
+		echo "You should edit it to reflect your own wikis placement."
+		echo "$rctempl" > "${rcfile}"
+	fi
+}
+########################################
 
 ########################################
 # Print tidhub usage
@@ -21,37 +69,28 @@ Options and their argument:
   [-l|--list]           list all available wikis with a R flag if running
   [-r|--run]  a|keylist run all wikis or just this keylist (default first from list)
   [-s|--stop] a|keylist stop all running wikis (default) or just this keylist
-  keylist
-    is a list of keys indexes in 'tiddirs' array as defined in 'tidhubrc' file (see below)
+  keylist               is a list of keys indexes in 'tiddirs' array
+                        which is defined in 'tidhubrc' file (see below)
 
 Usage examples:
   tidhub -l          list wikis
-  tidhub -r hnts 3   run wiki identified by key 'hnts' and 3
-  tidhub -s 3        stop wiki identified by key 3
+  tidhub -r hnts 3   run wiki identified by the key 'hnts' and 3
+  tidhub -s 3        stop wiki identified by the key 3
 
-Config file tidhubrc:
-  Tidhub makes use of ~./config/tidhub/tidhubrc file that must exist and be readable.
+Config file '${rcfile##*/}':
+  Tidhub makes use of '~/${rcfile#/*/*/}' file that must exist and be readable.
   It declares bash associative array of key=values pair,
-  where key is an unique identifier (name) of the wiki and value is path to it.
+  where 'key' is the unique identifier (name) of the wiki and
+        'value' is the path to it.
 
-Example of tidhubrc file:
-
-# This file is to be sourced from tidhub.sh
-declare -A tiddirs
-# Index of tiddirs is the unique user defined identifier (key) of the wiki instance
-# Value of tiddirs is the path to the wiki instance
-#
-# User definitions:
-tiddirs[hnts]="~/Notes/home_notes/"
-tiddirs[wnts]="~/Notes/work_notes/"
-tiddirs[train]="~/Training/my_journal/"
-tiddirs[3]="~/Todo/"
+Example of '${rcfile##*/}' file content:
+--------------------------------------
+${rctempl}
+--------------------------------------
 
 Requirements:
-  External programs required:
-	  Tiddlywiki on Node.js, awk, pgrep, pkill
+  External programs required: Tiddlywiki on Node.js, awk, pgrep, pkill
 _EOF_
-		exit
 }
 ########################################
 
@@ -119,6 +158,10 @@ stop_wikis () {
 ########################################
 ### Main
 ########################################
+# Prepare
+check_rc
+source "$rcfile"
+# Read opts and run service functions accordingly
 case $1 in
 	-h | --help)
 		 usage

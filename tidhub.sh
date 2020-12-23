@@ -5,13 +5,14 @@
 ########################################
 
 rcfile=~/.config/tidhub/tidhubrc
-rctempl="# This file is to be sourced from tidhub.sh
+rctempl="# This file is sourced from tidhub.sh
 
-declare -A wiki # do NOT change this
+declare -A wiki # DO NOT CHANGE THIS
 
-# User wiki array definition wiki[key]=value:
-# Key is the unique user defined identifier of the wiki instance
-# Value is the path to the wiki instance dir
+# User wiki array definition: wiki[key]=value:
+# Key is the unique user defined identifier of user's wiki instance
+# Value is the path to the wiki instance — directory, where the file
+# 'tiddlywiki.info' is.
 wiki[hnts]=~/Notes/home_notes/
 wiki[wnts]=~/Notes/work_notes/
 wiki[train]=~/Training/my_journal/
@@ -31,15 +32,9 @@ wiki[3]=~/Todo/"
 #   rcfile used
 #   rctempl used
 #
-# Arguments
-#   none
-#
 # Outputs:
-#    STDOUT message about creating rcfile
-#   rcfile create it if does not exist
-#
-# Returns:
-#   none
+#   STDOUT: message about creating rcfile
+#   rcfile: file - create it if does not exist
 ########################################
 check_rc () {
   local rcdir="${rcfile%/*}"
@@ -53,65 +48,81 @@ check_rc () {
 ########################################
 
 ########################################
-# Print tidhub usage
+# Print TidHub usage
 ########################################
-usage (){
+print_usage (){
 
 cat << _EOF_
 Purpose: Manage multiple Node.js' Tiddlywikis from this hub
 
 Usage:
-  tidhub.sh [option [argument]]
+  There are two modes of usage, Informative and Executive.
 
-Options and their argument:
-  [-h|--help]           print this document (default)
-  [-l|--list]           list all available wikis with a R flag if running
-  [-r|--run]  [keylist] run all wikis (default) or just those in the keylist
-  [-s|--stop] [keylist] stop all running wikis (default) or just those in the keylist
-  keylist               is a list of keys in 'wiki' array
-                        defined in 'tidhubrc' file (details see below)
+  Informative mode of usage: tidhub.sh [option]
+    Options:
+      [-h|--help]           print this document default, i.e. when no option or
+                            command is provided)
+      [-s|--status]         print info about configured and running wikis
+      [-v|--version]        print program version
 
-Usage examples:
-  tidhub -l          list wikis: key, pid, port
-  tidhub -r hnts 3   run wikis identified by the key 'hnts' and '3'
-  tidhub -s 3        stop wiki identified by the key '3'
+  Executive mode of usage: tidhub command [keylist]
+    Commands:
+      run                   run wikis according keylist option provided
+      stop                  stop wikis according keylist option provided
+    Options:
+      [keylist]             list of wiki keys (see below) separated by space.
+                            If no keylist id provided, then command will be
+                            executed on all configured or running wikis
 
-Config file '${rcfile##*/}':
-  Tidhub makes use of '~/${rcfile#/*/*/}' file.
-  If it does'not exist it will be automatically created from the template.
-  You have to edit it to reflect your own wikis placement.
-  It declares bash associative array of key=values pair,
-  where 'key' is the unique identifier (shorcut) of the wiki and
-        'value' is the path to it.
+  Usage examples:
+    tidhub -s               list wikis: key, path, pid, port
+    tidhub -r hnts 3        run wikis identified by the key 'hnts' and '3'
+    tidhub -s 3             stop wiki identified by the key '3'
 
-Example (template) of '${rcfile##*/}' file content:
+Configuration
+    TidHub makes use of '~/${rcfile#/*/*/}' file, where you have to configure
+    your specific wikis setup.
+    If the file does'not exist it will be automatically created from the template.
+    You have to edit it to reflect your own wikis specifications.
+    How to do it can be found directly in the file itself.
+    See the template/example below:
 --------------------------------------
 ${rctempl}
 --------------------------------------
 
 Requirements:
-  External programs required: Tiddlywiki on Node.js, awk, pgrep, pkill
+  External programs required by TidHub:
+    Tiddlywiki on Node.js, awk, sed, pgrep, pkill
 _EOF_
 }
 ########################################
 
 ########################################
-# List status of configured wikis: key pid port
+# Print status of configured wikis: key pid port
+#
+# Globals:
+#   wiki array used
+#   rcfile configuration file
+#
+# Outputs:
+#   STDOUT status of wikis: key path pid port
+########################################
+print_status () {
+  echo "Printing status"
+}
+########################################
+
+########################################
+# Print TidHub version
 #
 # Globals:
 #   wiki used
 #
-# Arguments
-#   none
-#
 # Outputs:
-#   list of wikis: key pid port
-#
-# Returns:
-#   none
+#   STDOUT TidHub version info
 ########################################
-list_wikis () {
-  echo "listing"
+print_version () {
+  echo "Printing version"
 }
 ########################################
 
@@ -120,15 +131,10 @@ list_wikis () {
 #
 # Globals:
 #   wiki used
+#   rcfile config file
 #
 # Arguments
 #   [keylist] of wikis to run, default is all
-#
-# Outputs:
-#   input
-#
-# Returns:
-#   none
 ########################################
 run_wikis () {
   echo "run: $@"
@@ -140,15 +146,10 @@ run_wikis () {
 #
 # Globals:
 #   wiki used
+#   rcfile config file
 #
 # Arguments
 #   [keylist] of wikis to stop, default is all
-#
-# Outputs:
-#   none
-#
-# Returns:
-#   none
 ########################################
 stop_wikis () {
   echo "stop: $@"
@@ -165,21 +166,24 @@ source "$rcfile"
 # Read opts and run service functions accordingly
 case $1 in
   -h | --help)
-     usage
+     print_usage
     ;;
-  -l | --list)
-    list_wikis
+  -s | --status)
+    print_status
     ;;
-  -r | --run)
+  -v | version)
+    print_version
+    ;;
+  run)
     shift
     run_wikis $@
     ;;
-  -s | --stop) #
+  stop)
     shift
     stop_wikis $@
     ;;
   *)
-    [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
+    [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage
     ;;
 esac
 exit

@@ -35,20 +35,20 @@ wiki[3]=~/Todo/"
 #   none
 #
 # Outputs:
-#		STDOUT message about creating rcfile
+#    STDOUT message about creating rcfile
 #   rcfile create it if does not exist
 #
 # Returns:
 #   none
 ########################################
 check_rc () {
-	local rcdir="${rcfile%/*}"
-	if [[ ! -r "${rcfile}" ]]; then
-		[[ -d "${rcdir}" ]] || mkdir "${rcdir}" # mkdir if necessary
-		echo "Required config file $rcfile is missing, so I'm creating it."
-		echo -e "You should edit it to reflect your own wikis placement.\n"
-		echo "$rctempl" > "${rcfile}"
-	fi
+  local rcdir="${rcfile%/*}"
+  if [[ ! -r "${rcfile}" ]]; then
+    [[ -d "${rcdir}" ]] || mkdir "${rcdir}" # mkdir if necessary
+    echo "Required config file $rcfile is missing, so I'm creating it."
+    echo -e "You should edit it to reflect your own wikis placement.\n"
+    echo "$rctempl" > "${rcfile}"
+  fi
 }
 ########################################
 
@@ -111,7 +111,7 @@ _EOF_
 #   none
 ########################################
 list_wikis () {
-	echo "listing"
+  echo "listing"
 }
 ########################################
 
@@ -131,7 +131,7 @@ list_wikis () {
 #   none
 ########################################
 run_wikis () {
-	echo "run: $@"
+  echo "run: $@"
 }
 ########################################
 
@@ -151,7 +151,7 @@ run_wikis () {
 #   none
 ########################################
 stop_wikis () {
-	echo "stop: $@"
+  echo "stop: $@"
 }
 ########################################
 
@@ -164,23 +164,23 @@ check_rc
 source "$rcfile"
 # Read opts and run service functions accordingly
 case $1 in
-	-h | --help)
-		 usage
-		;;
-	-l | --list)
-		list_wikis
-		;;
-	-r | --run)
-		shift
-		run_wikis $@
-		;;
-	-s | --stop) #
-		shift
-		stop_wikis $@
-		;;
-	*)
-		[[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
-		;;
+  -h | --help)
+     usage
+    ;;
+  -l | --list)
+    list_wikis
+    ;;
+  -r | --run)
+    shift
+    run_wikis $@
+    ;;
+  -s | --stop) #
+    shift
+    stop_wikis $@
+    ;;
+  *)
+    [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && usage
+    ;;
 esac
 exit
 ########################################

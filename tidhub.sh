@@ -33,16 +33,38 @@ wiki[3]=~/Todo/"
 #   rctempl used
 #
 # Outputs:
-#   STDOUT: message about creating rcfile
-#   rcfile: file - create it if does not exist
+#   STDERR: if rcfile missing
+#   STDERR: if unrecognised user input
+#   STDERR: if unable to create rcfile
+#   rcfile: if user interractively agrees about creating this file (incl dir)
+#
+# Returns:
+#   exit 0: user responds not to create file by tidhub
+#   exit 1: unable to create rcfile
+#   exit 2: unregognised user input
 ########################################
 check_rc () {
   local rcdir="${rcfile%/*}"
   if [[ ! -r "${rcfile}" ]]; then
-    [[ -d "${rcdir}" ]] || mkdir "${rcdir}" # mkdir if necessary
-    echo "Required config file $rcfile is missing, so I'm creating it."
-    echo -e "You should edit it to reflect your own wikis placement.\n"
-    echo "$rctempl" > "${rcfile}"
+    echo "Required config file '$rcfile' is missing." >&2
+    read -n 1 -p "Can I create it? Reply: y|n > "
+    echo ""
+    if [[ $REPLY == n ]]; then
+      echo -e "\nYou should create '$rcfile' by yourself. It's required by tidhub."
+      exit 0
+    elif [[ $REPLY == y ]]; then
+      [[ -d "${rcdir}" ]] || mkdir "$rcdir" && echo "$rctempl" > "$rcfile"
+      if [[ -r "${rcfile}" ]]; then
+        echo -e "\nFile '$rcfile' successfully created."
+        echo "You should edit it to reflect your own wikis placement."
+      else
+        echo -e "\nUnable to create '$rcfile'. Something is wrong." >&2
+        exit 2
+      fi
+    else
+      echo -e "\nAnswer unregognized." >&2
+      exit 2
+    fi
   fi
 }
 ########################################

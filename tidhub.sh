@@ -149,12 +149,7 @@ conf2csv () {
 ########################################
 live2csv () {
 # output from $(pgrep -a node)
-# TODO: subst test string 'echo "$from_pgrep"' by '$(pgrep -a node)' in final code
-  local from_pgrep="6049 node /usr/bin/tiddlywiki /home/marhaj/Notes/Tidtd/ --listen port=8002
-6075 node /usr/bin/tiddlywiki /home/marhaj/Notes/Tidlnx/ --listen port=8003
-1111 node /usr/bin/tiddlywiki /home/marhaj/Notes/Notconf/ --listen port=8111
-2222 node /usr/bin/somethingelse /home/marhaj/Notconf/ --listen port=8111"
-  echo "$from_pgrep" | \
+  pgrep -a node | \
     awk '/tiddlywiki/ { print "-,"$4","$1","$6 }' | \
     sed 's/port=//'
 }

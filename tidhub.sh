@@ -120,17 +120,118 @@ _EOF_
 ########################################
 
 ########################################
-# Print status of configured wikis: key pid port
+# Make CSV config list from wiki array
 #
 # Globals:
-#   wiki array used
-#   rcfile configuration file
+#   wiki: array used
 #
 # Outputs:
-#   STDOUT status of wikis: key path pid port
+#   STDOUT: CSV list of configured wiki: key,path,-,-
+########################################
+conf2csv () {
+  local i
+  for i in ${!wiki[@]}; do
+    echo "$i,"${wiki[$i]}",-,-"
+  done
+}
+########################################
+
+########################################
+# Make CSV list of live wikis
+# using output from command 'pgrep - a node'
+# Filter ouput only to items where command line containing 'tiddlywiki' word
+#
+# Outputs:
+#   STDOUT: CSV list of running wikis: -,path,pid,port
+#
+# Requires:
+#   EXT: pgrep, awk, sed
+########################################
+live2csv () {
+# output from $(pgrep -a node)
+# TODO: substitute 'echo "$live_ls"' by 'pgrep -a node' in final code
+  local from_pgrep="6049 node /usr/bin/tiddlywiki /home/marhaj/Notes/Tidtd/ --listen port=8002
+6075 node /usr/bin/tiddlywiki /home/marhaj/Notes/Tidlnx/ --listen port=8003
+1111 node /usr/bin/tiddlywiki /home/marhaj/Notes/Notconf/ --listen port=8111
+2222 node /usr/bin/somethingelse /home/marhaj/Notconf/ --listen port=8111"
+  (echo "$from_pgrep" | \
+    awk '/tiddlywiki/ { print "-,"$4","$1","$6 }' | \
+    sed 's/port=//')
+}
+########################################
+
+########################################
+# Merge conf and live CSV lists
+# Merging based on common field "path to wiki"
+#
+# Outputs:
+#   STDOUT: csv status list: key,path,pid,port. Empty values filled with '-'
+#
+# Requires:
+#   INT: conf2csv, live2csv
+########################################
+status_csv () {
+  local live_line
+  local conf_line
+  local output_line=""
+
+  while IFS=, read -r -a conf_line; do # loop config
+    output_line=$(printf '%s,%s,%s,%s\n' "${conf_line[@]}")
+    while IFS=, read -r -a live_line; do # loop live
+      if [[ "${conf_line[1]}" = "${live_line[1]}" ]]; then # merge lines
+        output_line="${conf_line[0]},${conf_line[1]},${live_line[2]},${live_line[3]}"
+        live_list=$(echo "$live_list" | \
+                    sed "/${live_line[3]}/d") # remove this line from live_list
+        break # no need to continue inner loop
+      fi
+    done <<< "$(live2csv)"
+    echo "$output_line"
+  done <<< "$(conf2csv)"
+  echo "$live_list" # remaning live_list
+}
+########################################
+
+########################################
+# Prints formatted & verified status of configured an live wikis with a header line
+# Verification, that every path points to a direcory containing 'tiddlywiki.info'
+#
+# Outputs:
+#   STDOUT: formatted list key,path,pid,port. Empty values filled with '-'
+#
+# Requires:
+#   EXT: sed, awk
+#   INT: conf2csv, live2csv
 ########################################
 print_status () {
-  echo "Printing status"
+  local line
+  local stat=""
+  local header="KEY,PATH,PID,PORT\n"
+  local footer="W.N.A: Wiki Not Avalilable on the path specified"
+  wna_flag="false"
+  local mx=4
+
+# if path does not point to tiddlywiki.info then replace it by 'w.n.a.'
+# also shorten path to ~/something nicely
+# also determine max length path mx
+
+  while IFS=, read -r -a line; do
+    if [[ -f "${line[1]}tiddlywiki.info" ]]; then
+      line[1]="~/${line[1]#/*/*/}"
+    else
+      line[1]="w.n.a."
+      flag=true
+    fi
+    (( mx < ${#line[1]} )) && mx=${#line[1]}
+    stat+="${line[0]},${line[1]},${line[2]},${line[3]}\n"
+  done <<< $(status_csv)
+
+# final output
+  mx=$(( $mx + 2 ))
+  echo -e "-------\n${header}${stat}" | \
+    awk -F, '{ printf "%-7s %-'${mx}'s %-6s %-6s \n", $1, $2, $3, $4 }' | \
+    sed '$d'
+  echo "-------"
+  [[ $flag ]] && echo -e "$footer"
 }
 ########################################
 

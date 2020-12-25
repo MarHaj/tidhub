@@ -17,6 +17,7 @@ wiki[hnts]=~/Notes/home_notes/
 wiki[wnts]=~/Notes/work_notes/
 wiki[train]=~/Training/my_journal/
 wiki[3]=~/Todo/"
+wiki_status_csv="" # wiki status csv list
 
 
 ########################################
@@ -55,7 +56,7 @@ check_rc () {
     elif [[ $REPLY == y ]]; then
       [[ -d "${rcdir}" ]] || mkdir "$rcdir" && echo "$rctempl" > "$rcfile"
       if [[ -r "${rcfile}" ]]; then
-        echo -e "\nFile '$rcfile' successfully created."
+        echo -e  "\nFile '$rcfile' successfully created."
         echo "You should edit it to reflect your own wikis placement."
       else
         echo -e "\nUnable to create '$rcfile'. Something is wrong." >&2
@@ -165,7 +166,7 @@ live2csv () {
 # Requires:
 #   INT: conf2csv, live2csv
 ########################################
-status_csv () {
+merge_csv () {
   local live_line
   local conf_line
   local output_line=""
@@ -187,9 +188,37 @@ status_csv () {
 ########################################
 
 ########################################
+# Create nice global wiki_status_csv list
+# If config path does not point to tiddlywiki.info then replace it by 'WNA'.
+# Also shorten path to ~/something nicely.
+#
+# Globals:
+#   wiki_status_csv: chnged
+#
+# Requires:
+#   INT: merge_csv
+########################################
+nice_csv () {
+  local line
+  wiki_status_csv=""
+
+  while IFS=, read -r -a line; do
+    if [[ -f "${line[1]}tiddlywiki.info" ]]; then
+      line[1]="~/${line[1]#/*/*/}"
+    else
+      line[1]="WNA"
+    fi
+    # (( mx < ${#line[1]} )) && mx=${#line[1]} # TODO: remove this line
+    wiki_status_csv+="${line[0]},${line[1]},${line[2]},${line[3]}\n"
+  done <<< $(merge_csv)
+}
+
+########################################
 # Prints formatted & verified status of configured an live wikis with a header line
 # Verification, that every path points to a direcory containing 'tiddlywiki.info'
 #
+# Golbals:
+#   wiki_status_csv: used
 # Outputs:
 #   STDOUT: formatted list key,path,pid,port
 #
@@ -198,35 +227,21 @@ status_csv () {
 #   INT: status_csv
 ########################################
 print_status () {
-  local line
-  local stat=""
   local header="KEY,PATH,PID,PORT\n"
-  local footer="W.N.A: Wiki Not Avalilable on the path specified"
-  wna_flag="false"
-  local mx=4
+  local footer="WNA: Wiki Not Avalilable on the path configured"
+  local wna_flag="false"
+  local mpl=4
 
-# if path does not point to tiddlywiki.info then replace it by 'w.n.a.'
-# also shorten path to ~/something nicely
-# also determine max length path mx
+# determine max path length for formatting purpose TODO
 
-  while IFS=, read -r -a line; do
-    if [[ -f "${line[1]}tiddlywiki.info" ]]; then
-      line[1]="~/${line[1]#/*/*/}"
-    else
-      line[1]="w.n.a."
-      flag=true
-    fi
-    (( mx < ${#line[1]} )) && mx=${#line[1]}
-    stat+="${line[0]},${line[1]},${line[2]},${line[3]}\n"
-  done <<< $(status_csv)
 
 # final output
   mx=$(( $mx + 2 ))
-  echo -e "-------\n${header}${stat}" | \
-    awk -F, '{ printf "%-7s %-'${mx}'s %-6s %-6s \n", $1, $2, $3, $4 }' | \
+  echo -e "-------\n${header}${wiki_status_csv}" | \
+    awk -F, '{ printf "%-7s %-'${mpl}'s %-6s %-6s \n", $1, $2, $3, $4 }' | \
     sed '$d'
   echo "-------"
-  [[ $flag ]] && echo -e "$footer"
+  [[ $wna_flag ]] && echo -e "$footer"
 }
 ########################################
 
@@ -281,6 +296,10 @@ stop_wikis () {
 # Prepare
 check_rc
 source "$rcfile"
+# test
+nice_csv
+echo "$wiki_status_csv" > ~/Projects/Test/Tidh/wkstcsv
+exit
 # Read opts and run service functions accordingly
 case $1 in
   -h | --help)

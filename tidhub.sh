@@ -214,34 +214,36 @@ nice_csv () {
 }
 
 ########################################
-# Prints formatted & verified status of configured an live wikis with a header line
-# Verification, that every path points to a direcory containing 'tiddlywiki.info'
+# Prints formatted wiki status
 #
-# Golbals:
+# Globals:
 #   wiki_status_csv: used
+#
 # Outputs:
-#   STDOUT: formatted list key,path,pid,port
+#   STDOUT: formatted list: key,path,pid,port + footer if WMA found
 #
 # Requires:
-#   EXT: sed, awk
-#   INT: status_csv
+#   EXT: sed, awk, sort
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT\n"
   local footer="WNA: Wiki Not Avalilable on the path configured"
-  local wna_flag="false"
-  local mpl=4
+  local mxpl
 
-# determine max path length for formatting purpose TODO
-
+# determine max path length for formatting purpose
+  mxpl=$(echo "${wiki_status_csv}" | \
+    awk -F, '{ print $2 }' | \
+    awk '{ print length}' | \
+    sort -nr | \
+    sed '1!d'
+  )
+  (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  mx=$(( $mx + 2 ))
   echo -e "-------\n${header}${wiki_status_csv}" | \
-    awk -F, '{ printf "%-7s %-'${mpl}'s %-6s %-6s \n", $1, $2, $3, $4 }' | \
-    sed '$d'
+    awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
   echo "-------"
-  [[ $wna_flag ]] && echo -e "$footer"
+  (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
 }
 ########################################
 
@@ -296,10 +298,7 @@ stop_wikis () {
 # Prepare
 check_rc
 source "$rcfile"
-# test
 wiki_status_csv=$(nice_csv)
-echo "$wiki_status_csv" > ~/Projects/Test/Tidh/wkstcsv
-exit
 
 # Read opts and run service functions accordingly
 case $1 in

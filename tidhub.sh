@@ -85,7 +85,7 @@ Usage:
     Options:
       [-h|--help]           print this document default, i.e. when no option or
                             command is provided)
-      [-s|--status]         print info about configured and running wikis
+      [-s|--status]         print status info about configured and running wikis
       [-v|--version]        print program version
 
   Executive mode of usage: tidhub command [keylist]
@@ -98,9 +98,9 @@ Usage:
                             executed on all configured or running wikis
 
   Usage examples:
-    tidhub -s               list wikis: key, path, pid, port
-    tidhub -r hnts 3        run wikis identified by the key 'hnts' and '3'
-    tidhub -s 3             stop wiki identified by the key '3'
+    tidhub -s               print status info about wikis
+    tidhub run hnts 3       run wikis identified by the key 'hnts' and '3'
+    tidhub stop 3           stop wiki identified by the key '3'
 
 Configuration
     TidHub makes use of '~/${rcfile#/*/*/}' file, where you have to configure

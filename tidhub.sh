@@ -126,12 +126,12 @@ _EOF_
 #   wiki: array used
 #
 # Outputs:
-#   STDOUT: CSV list of configured wiki: key,path,-,-
+#   STDOUT: CSV list of configured wiki: key,path,,
 ########################################
 conf2csv () {
   local i
   for i in ${!wiki[@]}; do
-    echo "$i,"${wiki[$i]}",-,-"
+    echo "$i,"${wiki[$i]}",,"
   done
 }
 ########################################
@@ -142,7 +142,7 @@ conf2csv () {
 # Filter ouput only to items where command line containing 'tiddlywiki' word
 #
 # Outputs:
-#   STDOUT: CSV list of running wikis: -,path,pid,port
+#   STDOUT: CSV list of running wikis: ,path,pid,port
 #
 # Requires:
 #   EXT: pgrep, awk, sed
@@ -150,7 +150,7 @@ conf2csv () {
 live2csv () {
 # output from $(pgrep -a node)
   pgrep -a node | \
-    awk '/tiddlywiki/ { print "-,"$4","$1","$6 }' | \
+    awk '/tiddlywiki/ { print ","$4","$1","$6 }' | \
     sed 's/port=//'
 }
 ########################################
@@ -160,7 +160,7 @@ live2csv () {
 # Merging based on common field "path to wiki"
 #
 # Outputs:
-#   STDOUT: csv status list: key,path,pid,port. Empty values filled with '-'
+#   STDOUT: csv status list: key,path,pid,port
 #
 # Requires:
 #   INT: conf2csv, live2csv
@@ -191,11 +191,11 @@ status_csv () {
 # Verification, that every path points to a direcory containing 'tiddlywiki.info'
 #
 # Outputs:
-#   STDOUT: formatted list key,path,pid,port. Empty values filled with '-'
+#   STDOUT: formatted list key,path,pid,port
 #
 # Requires:
 #   EXT: sed, awk
-#   INT: conf2csv, live2csv
+#   INT: status_csv
 ########################################
 print_status () {
   local line

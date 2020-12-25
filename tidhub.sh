@@ -209,7 +209,7 @@ nice_csv () {
       line[1]="WNA"
     fi
     # (( mx < ${#line[1]} )) && mx=${#line[1]} # TODO: remove this line
-    wiki_status_csv+="${line[0]},${line[1]},${line[2]},${line[3]}\n"
+     echo "${line[0]},${line[1]},${line[2]},${line[3]}"
   done <<< $(merge_csv)
 }
 
@@ -297,13 +297,14 @@ stop_wikis () {
 check_rc
 source "$rcfile"
 # test
-nice_csv
+wiki_status_csv=$(nice_csv)
 echo "$wiki_status_csv" > ~/Projects/Test/Tidh/wkstcsv
 exit
+
 # Read opts and run service functions accordingly
 case $1 in
   -h | --help)
-     print_usage
+    print_usage
     ;;
   -s | --status)
     print_status

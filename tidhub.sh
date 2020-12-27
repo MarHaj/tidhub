@@ -280,14 +280,35 @@ run_wikis () {
 # Stop all/selected wikis
 #
 # Globals:
-#   wiki used
-#   rcfile config file
+#   wiki_status_csv: used
 #
-# Arguments
-#   [keylist] of wikis to stop, default is all
+# Arguments:
+#   [keylist]: space separated list of wikis key to stop, default is stop all
+#
+# Requires:
+#   EXT: awk
 ########################################
 stop_wikis () {
-  echo "stop: $@"
+  local killed=0 # total killed count
+  local arr # CSV line: key,path,pid,port
+  local wpid # wiki pid to kill
+
+  if [[ $# == 0 ]]; then # kill all, cycle through keys
+    echo "Kill all"
+    while IFS="," read -a arr; do
+      wpid=${arr[2]}
+      [[ -n "$wpid" ]] && echo "Killing $wpid" && (( killed+=1 )) # TODO real kill
+    done <<< "$wiki_status_csv"
+  else # kill some, cycle through positional args - keys
+    echo "Kill some"
+    while (( $# > 0 )); do
+      wpid=$(echo "$wiki_status_csv" | \
+        awk -F, -v key="$1" ' $1 ~ key { print $3 }') # find pid according key
+      [[ -n "$wpid" ]] && echo "Killing $wpid" && (( killed+=1 )) # TODO real kill
+    shift
+    done
+  fi
+  echo "Killed total: $killed"
 }
 ########################################
 
@@ -313,11 +334,11 @@ case $1 in
     ;;
   run)
     shift
-    run_wikis $@
+    run_wikis $*
     ;;
   stop)
     shift
-    stop_wikis $@
+    stop_wikis $*
     ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage

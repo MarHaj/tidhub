@@ -90,7 +90,7 @@ Usage:
 
   Executive mode of usage: tidhub command [keylist]
     Commands:
-      run                   run wikis according keylist option provided
+      start                 start wikis according keylist option provided
       stop                  stop wikis according keylist option provided
     Options:
       [keylist]             list of wiki keys (see below) separated by space.
@@ -99,7 +99,7 @@ Usage:
 
   Usage examples:
     tidhub -s               print status info about wikis
-    tidhub run hnts 3       run wikis identified by the key 'hnts' and '3'
+    tidhub start hnts 3     star wikis identified by the keys 'hnts' and '3'
     tidhub stop 3           stop wiki identified by the key '3'
 
 Configuration
@@ -269,10 +269,10 @@ print_version () {
 #   rcfile config file
 #
 # Arguments
-#   [keylist] of wikis to run, default is all
+#   [keylist] of wikis to start, default is all
 ########################################
-run_wikis () {
-  echo "run: $@"
+start_wikis () {
+  echo "Start: $@"
 }
 ########################################
 
@@ -293,12 +293,12 @@ stop_wikis () {
   local arr # CSV line: key,path,pid,port
   local wpid # wiki pid to kill
 
-  if [[ $# == 0 ]]; then # kill all, cycle through keys
+  if [[ $# == 0 ]]; then # kill all running wikis, cycle through keys
     echo "Kill all"
     while IFS="," read -a arr; do
       wpid=${arr[2]}
       [[ -n "$wpid" ]] && echo "Killing $wpid" && (( killed+=1 )) # TODO real kill
-    done <<< "$wiki_status_csv"
+    done <<< "$(echo "$wiki_status_csv" | grep ',[0-9]\+$')" # running wikis only
   else # kill some, cycle through positional args - keys
     echo "Kill some"
     while (( $# > 0 )); do
@@ -332,13 +332,13 @@ case $1 in
   -v | version)
     print_version
     ;;
-  run)
+  start)
     shift
-    run_wikis $*
+    start_wikis "$@"
     ;;
   stop)
     shift
-    stop_wikis $*
+    stop_wikis "$@"
     ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage

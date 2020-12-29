@@ -262,17 +262,94 @@ print_version () {
 ########################################
 
 ########################################
-# Run all/selected wikis
+# Find first free TCP port from defined range
 #
 # Globals:
-#   wiki used
-#   rcfile config file
+#   wiki_status_csv: used
 #
-# Arguments
-#   [keylist] of wikis to start, default is all
+# OUTPUTS:
+#   STDOUT: free port or ""
+#   STDERR: message if no free port found
+#
+# RETURNS:
+#   return 0: success
+#   exit 1: no free TCP port in the range
+#
+# Reguires:
+#   EXT: ss, awk
+########################################
+get_free_port () {
+  local tcp_range=( {8001..8099} ) # array of ports to select from
+  local tcp_busy=( $(ss -tl \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local i j
+
+  for i in "${tcp_range[@]}"; do # loop through range tcp values
+    found_flag="true"
+    # echo "Testing tcp: ${tcp_range[$i]}"
+    for j in "${tcp_busy[@]}"; do # loop through busy tcp values
+      [[ $i -eq $j ]] && found_flag="false" && break
+    done
+    if [[ "$found_flag" == "true" ]]; then
+      echo "$i"
+      return 0 # on the first occurrence of free port
+    fi
+  done
+  echo "No free TCP port has been found in range ${tcp_range[@]}" >&2
+  exit 1 # cannot continue because no free port in the range has been found
+}
+########################################
+
+########################################
+# Run All/selected wikis
+#
+# Globals:
+#   wiki_status_csv: used
+#
+# Arguments:
+#   [keylist]: of wikis to run, default is all
+#
+# Requires:
+#   INT: mk_wiki_status
+#   EXT: awk, grep, get_free_port
 ########################################
 start_wikis () {
-  echo "Start: $@"
+  local started=0 # total started count
+  local arr # CSV line: key,path,pid,port
+  local wport # wiki port to be started
+  local wpath # wiki path to be started
+  local wavail="$(echo "$wiki_status_csv" \
+    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+
+  echo -e "\nAvailable wikis:\n$wavail\n"
+  if [[ $# == 0 ]]; then # start all available wikis
+    echo "Start all"
+    while IFS="," read -a arr; do
+      wpath=${arr[1]}
+      wport="$(get_free_port)"
+      # TODO real start
+      [[ -n "$wport" ]] \
+        && echo "Starting ${arr[0]}, $wpath at $wport" \
+        && (( started+=1 ))
+    done <<< "$wavail"
+  else # start available wikis according positional args - keys
+    echo "Start some"
+    while (( $# > 0 )); do
+      wpath=$(echo "$wavail" \
+        | awk -F, -v key="^$1\$" '$1 ~ key { print $2 }') # find path according key
+      echo "Cesta: '$wpath'"
+      # TODO real start
+      [[ -n "$wpath" ]] \
+        && wport=$(get_free_port) \
+        && echo "Starting '$1', $wpath at $wport" \
+        && (( started+=1 ))
+# FIXME update wavail/mk_wiki_status() after each start
+# otherwise multiple starts possible
+    shift
+    done
+  fi
+  echo "Started total: $started"
 }
 ########################################
 

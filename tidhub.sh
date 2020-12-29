@@ -292,19 +292,24 @@ stop_wikis () {
   local killed=0 # total killed count
   local arr # CSV line: key,path,pid,port
   local wpid # wiki pid to kill
+  local wrunning="$(echo "$wiki_status_csv" | grep ',[0-9]\+$')" # running wikis only
 
   if [[ $# == 0 ]]; then # kill all running wikis, cycle through keys
     echo "Kill all"
     while IFS="," read -a arr; do
       wpid=${arr[2]}
-      [[ -n "$wpid" ]] && echo "Killing $wpid" && (( killed+=1 )) # TODO real kill
-    done <<< "$(echo "$wiki_status_csv" | grep ',[0-9]\+$')" # running wikis only
+      [[ -n "$wpid" ]] \
+        && echo "Killing '${arr[0]}' pid $wpid" \
+        && (( killed+=1 )) # TODO real kill
+    done <<< "$wrunning" # running wikis only
   else # kill some, cycle through positional args - keys
     echo "Kill some"
     while (( $# > 0 )); do
-      wpid=$(echo "$wiki_status_csv" | \
+      wpid=$(echo "$wrunning" | \
         awk -F, -v key="$1" ' $1 ~ key { print $3 }') # find pid according key
-      [[ -n "$wpid" ]] && echo "Killing $wpid" && (( killed+=1 )) # TODO real kill
+      [[ -n "$wpid" ]] \
+        && echo "Killing '$1' pid $wpid" \
+        && (( killed+=1 )) # TODO real kill
     shift
     done
   fi

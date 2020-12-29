@@ -413,7 +413,7 @@ case $1 in
   -s | --status)
     print_status
     ;;
-  -v | version)
+  -v | --version)
     print_version
     ;;
   start)

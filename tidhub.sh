@@ -306,7 +306,7 @@ stop_wikis () {
     echo "Kill some"
     while (( $# > 0 )); do
       wpid=$(echo "$wrunning" | \
-        awk -F, -v key="$1" ' $1 ~ key { print $3 }') # find pid according key
+        awk -F, -v key="^$1\$" ' $1 ~ key { print $3 }') # find pid according key
       [[ -n "$wpid" ]] \
         && echo "Killing '$1' pid $wpid" \
         && (( killed+=1 )) # TODO real kill

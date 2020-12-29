@@ -193,12 +193,12 @@ merge_csv () {
 # Also shorten path to ~/something nicely.
 #
 # Globals:
-#   wiki_status_csv: chnged
+#   wiki_status_csv: changed
 #
 # Requires:
 #   INT: merge_csv
 ########################################
-nice_csv () {
+mk_wiki_status () {
   local line
   wiki_status_csv=""
 
@@ -310,6 +310,8 @@ stop_wikis () {
       [[ -n "$wpid" ]] \
         && echo "Killing '$1' pid $wpid" \
         && (( killed+=1 )) # TODO real kill
+# FIXME update wrunning/mk_wiki_status() after each kill
+# otherwise multiple kills possible
     shift
     done
   fi
@@ -324,7 +326,7 @@ stop_wikis () {
 # Prepare
 check_rc
 source "$rcfile"
-wiki_status_csv=$(nice_csv)
+wiki_status_csv=$(mk_wiki_status)
 
 # Read opts and run service functions accordingly
 case $1 in

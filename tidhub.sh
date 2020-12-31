@@ -319,7 +319,7 @@ start_wikis () {
   local arr # CSV line: key,path,pid,port
   local wport # wiki port to be started
   local wpath # wiki path to be started
-  local wavail="$(echo "$wiki_status_csv" \
+   local wavail="$(echo "$wiki_status_csv" \
     | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
 
   echo -e "\nAvailable wikis:\n$wavail\n"
@@ -362,37 +362,40 @@ start_wikis () {
 # Arguments:
 #   [keylist]: space separated list of wikis key to stop, default is stop all
 #
-# Requires:
-#   EXT: awk
+# Outputs:
+#   STDOUT: total count of stopped wikis
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
-  local arr # CSV line: key,path,pid,port
-  local wpid # wiki pid to kill
-  local wrunning="$(echo "$wiki_status_csv" | grep ',[0-9]\+$')" # running wikis only
+  declare -A pids_arr # associative array of keys,pids of all running wikis
+  local line
+  local i
 
-  if [[ $# == 0 ]]; then # kill all running wikis, cycle through keys
-    echo "Kill all"
-    while IFS="," read -a arr; do
-      wpid=${arr[2]}
-      [[ -n "$wpid" ]] \
-        && echo "Killing '${arr[0]}' pid $wpid" \
-        && (( killed+=1 )) # TODO real kill
-    done <<< "$wrunning" # running wikis only
-  else # kill some, cycle through positional args - keys
-    echo "Kill some"
-    while (( $# > 0 )); do
-      wpid=$(echo "$wrunning" | \
-        awk -F, -v key="^$1\$" ' $1 ~ key { print $3 }') # find pid according key
-      [[ -n "$wpid" ]] \
-        && echo "Killing '$1' pid $wpid" \
-        && (( killed+=1 )) # TODO real kill
-# FIXME update wrunning/mk_wiki_status() after each kill
-# otherwise multiple kills possible
-    shift
+# Get pids_arr
+  while IFS="," read -a line; do # line array=( key,-,pid,- )
+    [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
+  done <<< "$wiki_status_csv"
+
+# Killing all wikis
+  if [[ $# -eq 0 ]]; then
+    for i in ${pids_arr[@]}; do
+      kill $i || kill -9 $i \
+        && (( killed+=1 ))
     done
   fi
-  echo "Killed total: $killed"
+
+# Killing wikis according keys from command line
+  while (( $# > 0 )); do # args cycle
+    for i in ${!pids_arr[@]}; do
+      if [[ "$1" == "$i" ]]; then
+        kill ${pids_arr[$i]} || kill -9 ${pids_arr[$i]} \
+          && unset pids_arr[$i] \
+          && (( killed+=1 ))
+      fi
+    done
+    shift
+  done
+  echo "Stopped total: $killed"
 }
 ########################################
 
@@ -419,10 +422,14 @@ case $1 in
   start)
     shift
     start_wikis "$@"
+    wiki_status_csv=$(mk_wiki_status)
+    print_status
     ;;
   stop)
     shift
     stop_wikis "$@"
+    wiki_status_csv=$(mk_wiki_status)
+    print_status
     ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage

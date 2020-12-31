@@ -319,7 +319,7 @@ start_wikis () {
   local arr # CSV line: key,path,pid,port
   local wport # wiki port to be started
   local wpath # wiki path to be started
-  local wavail="$(echo "$wiki_status_csv" \
+   local wavail="$(echo "$wiki_status_csv" \
     | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
 
   echo -e "\nAvailable wikis:\n$wavail\n"
@@ -361,6 +361,9 @@ start_wikis () {
 #
 # Arguments:
 #   [keylist]: space separated list of wikis key to stop, default is stop all
+#
+# Outputs:
+#   STDOUT: total count of stopped wikis
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
@@ -373,13 +376,11 @@ stop_wikis () {
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
 
-  declare -p pids_arr
-
 # Killing all wikis
   if [[ $# -eq 0 ]]; then
     for i in ${pids_arr[@]}; do
-      echo "killing $i"
-      (( killed+=1 ))
+      kill $i || kill -9 $i \
+        && (( killed+=1 ))
     done
   fi
 
@@ -387,14 +388,14 @@ stop_wikis () {
   while (( $# > 0 )); do # args cycle
     for i in ${!pids_arr[@]}; do
       if [[ "$1" == "$i" ]]; then
-        echo "killing $i:${pids_arr[$i]}"
-        unset pids_arr[$i] # no multiple killing of the same key
-        (( killed+=1 ))
+        kill ${pids_arr[$i]} || kill -9 ${pids_arr[$i]} \
+          && unset pids_arr[$i] \
+          && (( killed+=1 ))
       fi
     done
     shift
   done
-  echo "Killed total: $killed"
+  echo "Stopped total: $killed"
 }
 ########################################
 

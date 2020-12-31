@@ -226,9 +226,9 @@ mk_wiki_status () {
 #   EXT: sed, awk, sort
 ########################################
 print_status () {
-  local header="KEY,PATH,PID,PORT\n"
+  local header="KEY,PATH,PID,PORT"
   local footer="WNA: Wiki Not Avalilable on the path configured"
-  local mxpl
+  local mxpl # maximum of paths lengths
 
 # determine max path length for formatting purpose
   mxpl=$(echo "${wiki_status_csv}" | \
@@ -240,7 +240,7 @@ print_status () {
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  echo -e "-------\n${header}${wiki_status_csv}" | \
+  echo -e "-------\n${header}\n${wiki_status_csv}" | \
     awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
   echo "-------"
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"

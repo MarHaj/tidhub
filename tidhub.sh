@@ -267,6 +267,10 @@ print_version () {
 # Globals:
 #   wiki_status_csv: used
 #
+# Arguments:
+#   $1: name of the array of tcp ports range
+#   $2: name of the array with already listening tcp ports
+#
 # OUTPUTS:
 #   STDOUT: free port or ""
 #   STDERR: message if no free port found
@@ -279,16 +283,14 @@ print_version () {
 #   EXT: ss, awk
 ########################################
 get_free_port () {
-  local tcp_range=( {8001..8099} ) # array of ports to select from
-  local tcp_busy=( $(ss -tl \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local -n range=$1 # referenced array of ports to select from
+  local -n busy=$2  # referenced array of listening ports
   local i j
 
-  for i in "${tcp_range[@]}"; do # loop through range tcp values
+  for i in "${range[@]}"; do # loop through range tcp values
     found_flag="true"
-    # echo "Testing tcp: ${tcp_range[$i]}"
-    for j in "${tcp_busy[@]}"; do # loop through busy tcp values
+    # echo "Testing tcp: ${range[$i]}"
+    for j in "${busy[@]}"; do # loop through busy tcp values
       [[ $i -eq $j ]] && found_flag="false" && break
     done
     if [[ "$found_flag" == "true" ]]; then
@@ -296,13 +298,13 @@ get_free_port () {
       return 0 # on the first occurrence of free port
     fi
   done
-  echo "No free TCP port has been found in range ${tcp_range[@]}" >&2
+  echo "No free TCP port has been found in range ${range[@]}" >&2
   exit 1 # cannot continue because no free port in the range has been found
 }
 ########################################
 
 ########################################
-# Run All/selected wikis
+# Start All/selected wikis
 #
 # Globals:
 #   wiki_status_csv: used
@@ -315,41 +317,79 @@ get_free_port () {
 #   EXT: awk, grep, get_free_port
 ########################################
 start_wikis () {
+  local tcp_range=( {8001..8010} ) # array of ports to select from
+  local tcp_busy=( 8001 8002 8005 8006 )
+#  local tcp_busy=( $(ss -tl \
+#    | awk '/LISTEN/ { print $4 }' \
+#    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
   local started=0 # total started count
-  local arr # CSV line: key,path,pid,port
-  local wport # wiki port to be started
-  local wpath # wiki path to be started
-   local wavail="$(echo "$wiki_status_csv" \
-    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+  local line # line array
+  local wport
+  declare -A path_arr
+  declare -A port_arr
+  local key
 
-  echo -e "\nAvailable wikis:\n$wavail\n"
-  if [[ $# == 0 ]]; then # start all available wikis
+# Make path_arr (key path) and port_arr (key port) for wikis available to start
+  while IFS="," read -a line; do # array=( key path pid port )
+    key=${line[0]}
+    path_arr[$key]="${line[1]}"
+    wport=$(get_free_port tcp_range tcp_busy)
+    port_arr[$key]=$wport
+    tcp_busy+=($wport) # after port assignment make it look like busy
+  done <<< "$(echo "$wiki_status_csv" \
+    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+  [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
+    && echo "Unexpected error" >&2 \
+    && exit 1
+
+# Test
+  echo "busy end: ${tcp_busy[@]}"
+  declare -p path_arr
+  declare -p port_arr
+
+
+# Startinq all wikis
+  if [[ $# -eq 0 ]]; then
     echo "Start all"
-    while IFS="," read -a arr; do
-      wpath=${arr[1]}
-      wport="$(get_free_port)"
-      # TODO real start
-      [[ -n "$wport" ]] \
-        && echo "Starting ${arr[0]}, $wpath at $wport" \
-        && (( started+=1 ))
-    done <<< "$wavail"
-  else # start available wikis according positional args - keys
-    echo "Start some"
-    while (( $# > 0 )); do
-      wpath=$(echo "$wavail" \
-        | awk -F, -v key="^$1\$" '$1 ~ key { print $2 }') # find path according key
-      echo "Cesta: '$wpath'"
-      # TODO real start
-      [[ -n "$wpath" ]] \
-        && wport=$(get_free_port) \
-        && echo "Starting '$1', $wpath at $wport" \
-        && (( started+=1 ))
-# FIXME update wavail/mk_wiki_status() after each start
-# otherwise multiple starts possible
-    shift
+    for key in ${!path_arr[@]}; do
+      echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
     done
   fi
-  echo "Started total: $started"
+
+#  local arr # CSV line: key,path,pid,port
+#  local wport # wiki port to be started
+#  local wpath # wiki path to be started
+#   local wavail="$(echo "$wiki_status_csv" \
+#    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+#
+#  echo -e "\nAvailable wikis:\n$wavail\n"
+#  if [[ $# == 0 ]]; then # start all available wikis
+#    echo "Start all"
+#    while IFS="," read -a arr; do
+#      wpath=${arr[1]}
+#      wport="$(get_free_port)"
+#      # TODO real start
+#      [[ -n "$wport" ]] \
+#        && echo "Starting ${arr[0]}, $wpath at $wport" \
+#        && (( started+=1 ))
+#    done <<< "$wavail"
+#  else # start available wikis according positional args - keys
+#    echo "Start some"
+#    while (( $# > 0 )); do
+#      wpath=$(echo "$wavail" \
+#        | awk -F, -v key="^$1\$" '$1 ~ key { print $2 }') # find path according key
+#      echo "Cesta: '$wpath'"
+#      # TODO real start
+#      [[ -n "$wpath" ]] \
+#        && wport=$(get_free_port) \
+#        && echo "Starting '$1', $wpath at $wport" \
+#        && (( started+=1 ))
+## FIXME update wavail/mk_wiki_status() after each start
+## otherwise multiple starts possible
+#    shift
+#    done
+#  fi
+#  echo "Started total: $started"
 }
 ########################################
 
@@ -372,7 +412,7 @@ stop_wikis () {
   local i
 
 # Get pids_arr
-  while IFS="," read -a line; do # line array=( key,-,pid,- )
+  while IFS="," read -a line; do # line array=( key path pid port )
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
 

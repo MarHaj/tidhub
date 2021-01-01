@@ -313,8 +313,8 @@ get_free_port () {
 #   [keylist]: of wikis to run, default is all
 #
 # Requires:
-#   INT: mk_wiki_status
-#   EXT: awk, grep, get_free_port
+#   INT: get_free_port
+#   EXT: awk
 ########################################
 start_wikis () {
   local tcp_range=( {8001..8010} ) # array of ports to select from
@@ -325,9 +325,9 @@ start_wikis () {
   local started=0 # total started count
   local line # line array
   local wport
+  local key
   declare -A path_arr
   declare -A port_arr
-  local key
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
@@ -342,54 +342,27 @@ start_wikis () {
     && echo "Unexpected error" >&2 \
     && exit 1
 
-# Test
-  echo "busy end: ${tcp_busy[@]}"
-  declare -p path_arr
-  declare -p port_arr
-
-
-# Startinq all wikis
+# Start all wikis
   if [[ $# -eq 0 ]]; then
     echo "Start all"
     for key in ${!path_arr[@]}; do
       echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+      (( started+=1 ))
     done
   fi
 
-#  local arr # CSV line: key,path,pid,port
-#  local wport # wiki port to be started
-#  local wpath # wiki path to be started
-#   local wavail="$(echo "$wiki_status_csv" \
-#    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
-#
-#  echo -e "\nAvailable wikis:\n$wavail\n"
-#  if [[ $# == 0 ]]; then # start all available wikis
-#    echo "Start all"
-#    while IFS="," read -a arr; do
-#      wpath=${arr[1]}
-#      wport="$(get_free_port)"
-#      # TODO real start
-#      [[ -n "$wport" ]] \
-#        && echo "Starting ${arr[0]}, $wpath at $wport" \
-#        && (( started+=1 ))
-#    done <<< "$wavail"
-#  else # start available wikis according positional args - keys
-#    echo "Start some"
-#    while (( $# > 0 )); do
-#      wpath=$(echo "$wavail" \
-#        | awk -F, -v key="^$1\$" '$1 ~ key { print $2 }') # find path according key
-#      echo "Cesta: '$wpath'"
-#      # TODO real start
-#      [[ -n "$wpath" ]] \
-#        && wport=$(get_free_port) \
-#        && echo "Starting '$1', $wpath at $wport" \
-#        && (( started+=1 ))
-## FIXME update wavail/mk_wiki_status() after each start
-## otherwise multiple starts possible
-#    shift
-#    done
-#  fi
-#  echo "Started total: $started"
+# Start wikis according keys provided by CLI
+  while (( $# > 0 )); do # args cycle
+    echo "Start some"
+    for key in ${!path_arr[@]}; do
+      if [[ "$1" == "$key" ]]; then
+        echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+        (( started+=1 ))
+      fi
+    done
+    shift
+  done
+  echo "Started total: $started"
 }
 ########################################
 
@@ -416,7 +389,7 @@ stop_wikis () {
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
 
-# Killing all wikis
+# Kill all wikis
   if [[ $# -eq 0 ]]; then
     for i in ${pids_arr[@]}; do
       kill $i || kill -9 $i \
@@ -424,7 +397,7 @@ stop_wikis () {
     done
   fi
 
-# Killing wikis according keys from command line
+# Kill wikis according keys provided by CLI
   while (( $# > 0 )); do # args cycle
     for i in ${!pids_arr[@]}; do
       if [[ "$1" == "$i" ]]; then

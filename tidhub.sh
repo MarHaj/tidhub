@@ -338,13 +338,13 @@ start_wikis () {
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
     key=${line[0]}
-    # IMPORTANT restore path from '~/…' to '$HOME/…'
+    # IMPORTANT restore path from '~/…' to '$HOME/…' on the next line
     path_arr[$key]="$HOME/${line[1]#*/}"
     wport=$(get_free_port tcp_range tcp_busy)
     port_arr[$key]=$wport
-    tcp_busy+=($wport) # after port assignment make it look like busy
+    tcp_busy+=($wport) # after assignment make port looks like busy
   done <<< "$(echo "$wiki_status_csv" \
-    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+    | grep -v ',WNA,\|[0-9]\+$')" # !! wikis ready to start (not WNA or running)
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
     && echo "Unexpected error" >&2 \
     && exit 1

@@ -338,7 +338,8 @@ start_wikis () {
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
     key=${line[0]}
-    path_arr[$key]="${line[1]}"
+    # IMPORTANT restore path from '~/…' to '$HOME/…'
+    path_arr[$key]="$HOME/${line[1]#*/}"
     wport=$(get_free_port tcp_range tcp_busy)
     port_arr[$key]=$wport
     tcp_busy+=($wport) # after port assignment make it look like busy
@@ -356,12 +357,11 @@ start_wikis () {
     done
   fi
 
-# Start wikis according keys provided by CLI
+# Start wikis on the background according keys provided by CLI
   while (( $# > 0 )); do # args cycle
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
         echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
-        # FIXME: wiki starting, but bad path, bad status
         tiddlywiki \
           ${path_arr[$key]} \
           --listen port=${port_arr[$key]} \

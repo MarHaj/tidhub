@@ -312,16 +312,22 @@ get_free_port () {
 # Arguments:
 #   [keylist]: of wikis to run, default is all
 #
+# OUTPUTS:
+#   STDERR: if (key path) and (key port) arrays are of unequal lengths
+#   STDOUT: total count of started wikis
+#
+# RETURNS:
+#   exit 1: if error above occurres
+#
 # Requires:
 #   INT: get_free_port
 #   EXT: awk
 ########################################
 start_wikis () {
   local tcp_range=( {8001..8010} ) # array of ports to select from
-  local tcp_busy=( 8001 8002 8005 8006 )
-#  local tcp_busy=( $(ss -tl \
-#    | awk '/LISTEN/ { print $4 }' \
-#    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local tcp_busy=( $(ss -tl \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
   local started=0 # total started count
   local line # line array
   local wport
@@ -344,7 +350,6 @@ start_wikis () {
 
 # Start all wikis
   if [[ $# -eq 0 ]]; then
-    echo "Start all"
     for key in ${!path_arr[@]}; do
       echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
       (( started+=1 ))
@@ -353,10 +358,16 @@ start_wikis () {
 
 # Start wikis according keys provided by CLI
   while (( $# > 0 )); do # args cycle
-    echo "Start some"
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
         echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+        # FIXME: wiki starting, but bad path, bad status
+        tiddlywiki \
+          ${path_arr[$key]} \
+          --listen port=${port_arr[$key]} \
+          &>/dev/null &
+        unset path_arr[$key]
+        unset port_arr[$key]
         (( started+=1 ))
       fi
     done

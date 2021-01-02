@@ -22,7 +22,7 @@ wiki_status_csv="" # wiki status CSV list
 
 
 ########################################
-### Functions definition
+### Functions definitions
 ########################################
 
 
@@ -33,7 +33,7 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.00, date 2020-01-02"
+  echo "Version 1.00, date 2021-01-02"
 }
 ########################################
 
@@ -131,6 +131,13 @@ Requirements:
   External programs required by TidHub:
     Tiddlywiki on Node.js, awk, sed, pgrep, ss,
     xdg-open|x-wwwbrowser|sensible-browser
+
+Copyright notice:
+    Copyright  2021 Martin Hájek <marhaj at gmx.com>
+    under GNU General Public Licence version 3 or later.
+
+    You should have received a copy of the GNU General Public License
+    along with this program. If not, see <https://www.gnu.org/licenses/>.
 _EOF_
 }
 ########################################

@@ -7,17 +7,17 @@
 rcfile=~/.config/tidhub/tidhubrc
 rctempl="# This file is sourced from tidhub.sh
 
-declare -A wiki # DO NOT CHANGE THIS
+declare -A WIKI # DO NOT CHANGE THIS
 
-# User wiki array definition: wiki[key]=value:
+# User wiki associative array definition: WIKI[key]=value
 # Key is the unique user defined identifier of user's wiki instance
-# Value is the path to the wiki instance — directory, where the file
-# 'tiddlywiki.info' is.
-wiki[hnts]=~/Notes/home_notes/
-wiki[wnts]=~/Notes/work_notes/
-wiki[train]=~/Training/my_journal/
-wiki[3]=~/Todo/"
-wiki_status_csv="" # wiki status csv list
+# Value is the path to the wiki instance — i.e. to the directory,
+# where 'tiddlywiki.info' file is at the top.
+WIKI[hnts]=~/Notes/home_notes/
+WIKI[wnts]=~/Notes/work_notes/
+WIKI[train]=~/Training/my_journal/
+WIKI[3]=~/Todo/"
+wiki_status_csv="" # wiki status CSV list
 
 
 ########################################
@@ -127,15 +127,15 @@ _EOF_
 # Make CSV config list from wiki array
 #
 # Globals:
-#   wiki: array used
+#   WIKI: array used
 #
 # Outputs:
 #   STDOUT: CSV list of configured wiki: key,path,,
 ########################################
 conf2csv () {
   local i
-  for i in ${!wiki[@]}; do
-    echo "$i,"${wiki[$i]}",,"
+  for i in ${!WIKI[@]}; do
+    echo "$i,"${WIKI[$i]}",,"
   done
 }
 ########################################
@@ -252,9 +252,6 @@ print_status () {
 
 ########################################
 # Print TidHub version
-#
-# Globals:
-#   wiki used
 #
 # Outputs:
 #   STDOUT TidHub version info

@@ -91,18 +91,20 @@ Usage:
   Executive mode of usage: tidhub command [keylist]
     Commands:
       start                 start wikis according keylist option provided
+                            nad view them in the default browser
       stop                  stop wikis according keylist option provided
+      view                  view vikis in the default browser
     Options:
       [keylist]             list of wiki keys (see below) separated by space.
-                            If no keylist id provided, then command will be
+                            If no keylist provided, then command will be
                             executed on all configured or running wikis
 
   Usage examples:
     tidhub -s               print status info about wikis
-    tidhub start hnts 3     star wikis identified by the keys 'hnts' and '3'
+    tidhub start hnts 3     start wikis identified by the keys 'hnts' and '3'
     tidhub stop 3           stop wiki identified by the key '3'
 
-Configuration
+Configuration:
     TidHub makes use of '~/${rcfile#/*/*/}' file, where you have to configure
     your specific wikis setup.
     If the file does'not exist it will be automatically created from the template.
@@ -115,7 +117,8 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, pkill
+    Tiddlywiki on Node.js, awk, sed, pgrep, ss, kill,
+    xdg-open|x-wwwbrowser|sensible-browser
 _EOF_
 }
 ########################################
@@ -262,6 +265,12 @@ print_version () {
 ########################################
 
 ########################################
+view_wikis () {
+  echo "View wikis in the browser"
+}
+########################################
+
+########################################
 # Find first free TCP port from defined range
 #
 # Globals:
@@ -304,7 +313,7 @@ get_free_port () {
 ########################################
 
 ########################################
-# Start All/selected wikis
+# Start all/selected wikis
 #
 # Globals:
 #   wiki_status_csv: used
@@ -313,8 +322,8 @@ get_free_port () {
 #   [keylist]: of wikis to run, default is all
 #
 # OUTPUTS:
-#   STDERR: if (key path) and (key port) arrays are of unequal lengths
 #   STDOUT: total count of started wikis
+#   STDERR: if (key path) and (key port) arrays are of unequal lengths
 #
 # RETURNS:
 #   exit 1: if error above occurres
@@ -444,17 +453,20 @@ case $1 in
     print_version
     ;;
   start)
-    shift
+    shift # to provide keylist
     start_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status)
+    wiki_status_csv=$(mk_wiki_status) # updated status
     print_status
     ;;
   stop)
-    shift
+    shift # to provide keylist
     stop_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status)
+    wiki_status_csv=$(mk_wiki_status) # updated status
     print_status
     ;;
+  view)
+    shift # to provide keylist
+    view_wikis "$@"
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage
     ;;

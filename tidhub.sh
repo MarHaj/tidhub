@@ -265,8 +265,46 @@ print_version () {
 ########################################
 
 ########################################
+# View all/selected running wikis in the default browser
+#
+# Globals:
+#   wiki_status_csv: used
+#
+# Arguments:
+#   [keylist]: space separated list of wikis key to stop, default is stop all
+########################################
 view_wikis () {
-  echo "View wikis in the browser"
+  declare -A ports_arr # associative array ( key port) of all running wikis
+  local line
+  local i
+  local url="http://localhost:"
+
+# Get ports_arr=( key port )
+  while IFS="," read -a line; do # line array=( key path pid port )
+    [[ -n "${line[3]}" ]] && ports_arr[${line[0]}]=${line[3]}
+  done <<< "$wiki_status_csv"
+
+  [[ ${#ports_arr[@]} -eq 0 ]] && return # there si nothing to view
+
+# View all wikis
+  if [[ $# -eq 0 ]]; then
+    for i in ${ports_arr[@]}; do
+      url+=$i
+      xdg-open $url || x-www-browser $url || sensible-browser $url
+    done
+  fi
+
+# View wikis according keys provided by CLI, prevent multiple views of one key
+  while (( $# > 0 )); do # args cycle
+    for i in ${!ports_arr[@]}; do
+      if [[ "$1" == "$i" ]]; then
+        url+=${ports_arr[$i]}
+        xdg-open $url || x-www-browser $url || sensible-browser $url \
+          && unset ports_arr[$i]
+      fi
+    done
+    shift
+  done
 }
 ########################################
 
@@ -313,7 +351,7 @@ get_free_port () {
 ########################################
 
 ########################################
-# Start all/selected wikis
+# Start all/selected wikis thar are not running yet
 #
 # Globals:
 #   wiki_status_csv: used
@@ -333,7 +371,7 @@ get_free_port () {
 #   EXT: awk
 ########################################
 start_wikis () {
-  local tcp_range=( {8001..8010} ) # array of ports to select from
+  local tcp_range=( {8001..8050} ) # array of ports to select from
   local tcp_busy=( $(ss -tl \
     | awk '/LISTEN/ { print $4 }' \
     | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
@@ -366,7 +404,7 @@ start_wikis () {
     done
   fi
 
-# Start wikis on the background according keys provided by CLI
+# Start wikis in bgr according keys from CLI, prevent multiple starts one key
   while (( $# > 0 )); do # args cycle
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
@@ -387,7 +425,7 @@ start_wikis () {
 ########################################
 
 ########################################
-# Stop all/selected wikis
+# Stop all/selected already running wikis
 #
 # Globals:
 #   wiki_status_csv: used
@@ -400,11 +438,11 @@ start_wikis () {
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
-  declare -A pids_arr # associative array of keys,pids of all running wikis
+  declare -A pids_arr # associative array ( key pid ) of all running wikis
   local line
   local i
 
-# Get pids_arr
+# Get pids_arr=( key pid ) of running wikis
   while IFS="," read -a line; do # line array=( key path pid port )
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
@@ -417,7 +455,7 @@ stop_wikis () {
     done
   fi
 
-# Kill wikis according keys provided by CLI
+# Kill wikis according keys provided by CLI, prevent multiple kills of one key
   while (( $# > 0 )); do # args cycle
     for i in ${!pids_arr[@]}; do
       if [[ "$1" == "$i" ]]; then

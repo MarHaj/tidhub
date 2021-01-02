@@ -91,18 +91,20 @@ Usage:
   Executive mode of usage: tidhub command [keylist]
     Commands:
       start                 start wikis according keylist option provided
+                            nad view them in the default browser
       stop                  stop wikis according keylist option provided
+      view                  view vikis in the default browser
     Options:
       [keylist]             list of wiki keys (see below) separated by space.
-                            If no keylist id provided, then command will be
+                            If no keylist provided, then command will be
                             executed on all configured or running wikis
 
   Usage examples:
     tidhub -s               print status info about wikis
-    tidhub start hnts 3     star wikis identified by the keys 'hnts' and '3'
+    tidhub start hnts 3     start wikis identified by the keys 'hnts' and '3'
     tidhub stop 3           stop wiki identified by the key '3'
 
-Configuration
+Configuration:
     TidHub makes use of '~/${rcfile#/*/*/}' file, where you have to configure
     your specific wikis setup.
     If the file does'not exist it will be automatically created from the template.
@@ -115,7 +117,8 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, pkill
+    Tiddlywiki on Node.js, awk, sed, pgrep, ss, kill,
+    xdg-open|x-wwwbrowser|sensible-browser
 _EOF_
 }
 ########################################
@@ -226,9 +229,9 @@ mk_wiki_status () {
 #   EXT: sed, awk, sort
 ########################################
 print_status () {
-  local header="KEY,PATH,PID,PORT\n"
+  local header="KEY,PATH,PID,PORT"
   local footer="WNA: Wiki Not Avalilable on the path configured"
-  local mxpl
+  local mxpl # maximum of paths lengths
 
 # determine max path length for formatting purpose
   mxpl=$(echo "${wiki_status_csv}" | \
@@ -240,7 +243,7 @@ print_status () {
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  echo -e "-------\n${header}${wiki_status_csv}" | \
+  echo -e "-------\n${header}\n${wiki_status_csv}" | \
     awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
   echo "-------"
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
@@ -262,10 +265,58 @@ print_version () {
 ########################################
 
 ########################################
+# View all/selected running wikis in the default browser
+#
+# Globals:
+#   wiki_status_csv: used
+#
+# Arguments:
+#   [keylist]: space separated list of wikis key to stop, default is stop all
+########################################
+view_wikis () {
+  declare -A ports_arr # associative array ( key port) of all running wikis
+  local line
+  local i
+  local url="http://localhost:"
+
+# Get ports_arr=( key port )
+  while IFS="," read -a line; do # line array=( key path pid port )
+    [[ -n "${line[3]}" ]] && ports_arr[${line[0]}]=${line[3]}
+  done <<< "$wiki_status_csv"
+
+  [[ ${#ports_arr[@]} -eq 0 ]] && return # there si nothing to view
+
+# View all wikis
+  if [[ $# -eq 0 ]]; then
+    for i in ${ports_arr[@]}; do
+      url+=$i
+      xdg-open $url || x-www-browser $url || sensible-browser $url
+    done
+  fi
+
+# View wikis according keys provided by CLI, prevent multiple views of one key
+  while (( $# > 0 )); do # args cycle
+    for i in ${!ports_arr[@]}; do
+      if [[ "$1" == "$i" ]]; then
+        url+=${ports_arr[$i]}
+        xdg-open $url || x-www-browser $url || sensible-browser $url \
+          && unset ports_arr[$i]
+      fi
+    done
+    shift
+  done
+}
+########################################
+
+########################################
 # Find first free TCP port from defined range
 #
 # Globals:
 #   wiki_status_csv: used
+#
+# Arguments:
+#   $1: name of the array of tcp ports range
+#   $2: name of the array with already listening tcp ports
 #
 # OUTPUTS:
 #   STDOUT: free port or ""
@@ -279,16 +330,14 @@ print_version () {
 #   EXT: ss, awk
 ########################################
 get_free_port () {
-  local tcp_range=( {8001..8099} ) # array of ports to select from
-  local tcp_busy=( $(ss -tl \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local -n range=$1 # referenced array of ports to select from
+  local -n busy=$2  # referenced array of listening ports
   local i j
 
-  for i in "${tcp_range[@]}"; do # loop through range tcp values
+  for i in "${range[@]}"; do # loop through range tcp values
     found_flag="true"
-    # echo "Testing tcp: ${tcp_range[$i]}"
-    for j in "${tcp_busy[@]}"; do # loop through busy tcp values
+    # echo "Testing tcp: ${range[$i]}"
+    for j in "${busy[@]}"; do # loop through busy tcp values
       [[ $i -eq $j ]] && found_flag="false" && break
     done
     if [[ "$found_flag" == "true" ]]; then
@@ -296,13 +345,13 @@ get_free_port () {
       return 0 # on the first occurrence of free port
     fi
   done
-  echo "No free TCP port has been found in range ${tcp_range[@]}" >&2
+  echo "No free TCP port has been found in range ${range[@]}" >&2
   exit 1 # cannot continue because no free port in the range has been found
 }
 ########################################
 
 ########################################
-# Run All/selected wikis
+# Start all/selected wikis thar are not running yet
 #
 # Globals:
 #   wiki_status_csv: used
@@ -310,51 +359,73 @@ get_free_port () {
 # Arguments:
 #   [keylist]: of wikis to run, default is all
 #
+# OUTPUTS:
+#   STDOUT: total count of started wikis
+#   STDERR: if (key path) and (key port) arrays are of unequal lengths
+#
+# RETURNS:
+#   exit 1: if error above occurres
+#
 # Requires:
-#   INT: mk_wiki_status
-#   EXT: awk, grep, get_free_port
+#   INT: get_free_port
+#   EXT: awk
 ########################################
 start_wikis () {
+  local tcp_range=( {8001..8050} ) # array of ports to select from
+  local tcp_busy=( $(ss -tl \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
   local started=0 # total started count
-  local arr # CSV line: key,path,pid,port
-  local wport # wiki port to be started
-  local wpath # wiki path to be started
-   local wavail="$(echo "$wiki_status_csv" \
-    | grep -v ',WNA,\|[0-9]\+$')" # wikis available to start (not WNA or running)
+  local line # line array
+  local wport
+  local key
+  declare -A path_arr
+  declare -A port_arr
 
-  echo -e "\nAvailable wikis:\n$wavail\n"
-  if [[ $# == 0 ]]; then # start all available wikis
-    echo "Start all"
-    while IFS="," read -a arr; do
-      wpath=${arr[1]}
-      wport="$(get_free_port)"
-      # TODO real start
-      [[ -n "$wport" ]] \
-        && echo "Starting ${arr[0]}, $wpath at $wport" \
-        && (( started+=1 ))
-    done <<< "$wavail"
-  else # start available wikis according positional args - keys
-    echo "Start some"
-    while (( $# > 0 )); do
-      wpath=$(echo "$wavail" \
-        | awk -F, -v key="^$1\$" '$1 ~ key { print $2 }') # find path according key
-      echo "Cesta: '$wpath'"
-      # TODO real start
-      [[ -n "$wpath" ]] \
-        && wport=$(get_free_port) \
-        && echo "Starting '$1', $wpath at $wport" \
-        && (( started+=1 ))
-# FIXME update wavail/mk_wiki_status() after each start
-# otherwise multiple starts possible
-    shift
+# Make path_arr (key path) and port_arr (key port) for wikis available to start
+  while IFS="," read -a line; do # array=( key path pid port )
+    key=${line[0]}
+    # IMPORTANT restore path from '~/…' to '$HOME/…' on the next line
+    path_arr[$key]="$HOME/${line[1]#*/}"
+    wport=$(get_free_port tcp_range tcp_busy)
+    port_arr[$key]=$wport
+    tcp_busy+=($wport) # after assignment make port looks like busy
+  done <<< "$(echo "$wiki_status_csv" \
+    | grep -v ',WNA,\|[0-9]\+$')" # !! wikis ready to start (not WNA or running)
+  [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
+    && echo "Unexpected error" >&2 \
+    && exit 1
+
+# Start all wikis
+  if [[ $# -eq 0 ]]; then
+    for key in ${!path_arr[@]}; do
+      echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+      (( started+=1 ))
     done
   fi
+
+# Start wikis in bgr according keys from CLI, prevent multiple starts one key
+  while (( $# > 0 )); do # args cycle
+    for key in ${!path_arr[@]}; do
+      if [[ "$1" == "$key" ]]; then
+        echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+        tiddlywiki \
+          ${path_arr[$key]} \
+          --listen port=${port_arr[$key]} \
+          &>/dev/null &
+        unset path_arr[$key]
+        unset port_arr[$key]
+        (( started+=1 ))
+      fi
+    done
+    shift
+  done
   echo "Started total: $started"
 }
 ########################################
 
 ########################################
-# Stop all/selected wikis
+# Stop all/selected already running wikis
 #
 # Globals:
 #   wiki_status_csv: used
@@ -367,16 +438,16 @@ start_wikis () {
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
-  declare -A pids_arr # associative array of keys,pids of all running wikis
+  declare -A pids_arr # associative array ( key pid ) of all running wikis
   local line
   local i
 
-# Get pids_arr
-  while IFS="," read -a line; do # line array=( key,-,pid,- )
+# Get pids_arr=( key pid ) of running wikis
+  while IFS="," read -a line; do # line array=( key path pid port )
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
 
-# Killing all wikis
+# Kill all wikis
   if [[ $# -eq 0 ]]; then
     for i in ${pids_arr[@]}; do
       kill $i || kill -9 $i \
@@ -384,7 +455,7 @@ stop_wikis () {
     done
   fi
 
-# Killing wikis according keys from command line
+# Kill wikis according keys provided by CLI, prevent multiple kills of one key
   while (( $# > 0 )); do # args cycle
     for i in ${!pids_arr[@]}; do
       if [[ "$1" == "$i" ]]; then
@@ -420,16 +491,20 @@ case $1 in
     print_version
     ;;
   start)
-    shift
+    shift # to provide keylist
     start_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status)
+    wiki_status_csv=$(mk_wiki_status) # updated status
     print_status
     ;;
   stop)
-    shift
+    shift # to provide keylist
     stop_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status)
+    wiki_status_csv=$(mk_wiki_status) # updated status
     print_status
+    ;;
+  view)
+    shift # to provide keylist
+    view_wikis "$@"
     ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage

@@ -2,19 +2,18 @@
 
 Running several wikis via Tiddlywiki on Node.js from a command line can be a kind of pain in the ass. Especially if you run wikis in the background, use many terminals and forgot from which one you have run them or forgot which ports you have assigned assigned to them etc.
 
-TidHub is a simple bash script that greatly simplifies control of wikis on your machine. Instead of remembering or finding paths, pids, ports it introduces concept of wiki *keys*. Wiki keys are easy-to-write aliases to wikis on your computer which you define by yourself.
+TidHub is a simple bash script that greatly simplifies management of wikis on your machine. Instead of remembering or finding paths, pids, ports it introduces concept of wiki *keys*. Wiki keys are easy-to-write aliases to wikis on your computer which you define by yourself.
 
-TidHub utilizes central user defined wikis list in very simple config file, which is created as a template (if user interactively agrees) by the program itself. You have to only edit this template.
+TidHub utilizes central user defined wiki key list in very simple config file, which is created as a template (if user interactively agrees) by the program itself. You have to only edit this template.
 
-TidHub
+TidHub provides the following functionality:
 
-* Provides the following functionality:
-	* Starts all|selected wikis in the background (while automatically chooses tcp port to be listened).
-	* Views all|selected wikis in the default browser as http://localhost:port page.
-	* Views status of all preconfigured wikis: key (aka user shorcut), path, pid, port in one well-arranged table.
-	* Stops all|selected wikis (while automatically finds appropriate pid to be killed)
+* Starts all|selected wikis in the background (while automatically chooses tcp port to be listened).
+* Views all|selected wikis in the default browser as http://localhost:port page.
+* Views status of all preconfigured wikis: key (aka user shorcut), path, pid, port in one well-arranged table.
+* Stops all|selected wikis (while automatically finds appropriate pid to be killed)
 
-TidHub also has quite detailed documentation about program usage and tidhubrc config file setup.
+TidHub has also quite detailed documentation about program usage and config file setup.
 
 ## Requirements
 

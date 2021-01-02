@@ -154,8 +154,8 @@ conf2csv () {
 live2csv () {
 # output from $(pgrep -a node)
   pgrep -a node | \
-    awk '/tiddlywiki/ { print ","$4","$1","$6 }' | \
-    sed 's/port=//'
+    awk '/tiddlywiki/ { print ","$4","$1","$6 }' \
+    | sed 's/port=//'
 }
 ########################################
 
@@ -179,8 +179,8 @@ merge_csv () {
     while IFS=, read -r -a live_line; do # loop live
       if [[ "${conf_line[1]}" = "${live_line[1]}" ]]; then # merge lines
         output_line="${conf_line[0]},${conf_line[1]},${live_line[2]},${live_line[3]}"
-        live_list=$(echo "$live_list" | \
-                    sed "/${live_line[3]}/d") # remove this line from live_list
+        live_list=$(echo "$live_list" \
+          | sed "/${live_line[3]}/d") # remove this line from live_list
         break # no need to continue inner loop
       fi
     done <<< "$(live2csv)"
@@ -234,11 +234,11 @@ print_status () {
   local mxpl # maximum of paths lengths
 
 # determine max path length for formatting purpose
-  mxpl=$(echo "${wiki_status_csv}" | \
-    awk -F, '{ print $2 }' | \
-    awk '{ print length}' | \
-    sort -nr | \
-    sed '1!d'
+  mxpl=$(echo "${wiki_status_csv}" \
+    | awk -F, '{ print $2 }' \
+    | awk '{ print length}' \
+    | sort -nr \
+    | sed '1!d'
   )
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 

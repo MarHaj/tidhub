@@ -88,7 +88,8 @@ check_rc () {
 print_usage (){
 
 cat << _EOF_
-Purpose: Manage multiple Node.js' Tiddlywikis from this hub
+Purpose:
+  Manage multiple local 'Tiddlywikis' on 'Node.js'
 
 Usage:
   There are two modes of usage, Informative and Executive.
@@ -135,6 +136,10 @@ Requirements:
 Copyright notice:
     Copyright  2021 Martin Hájek <marhaj at gmx.com>
     under GNU General Public Licence version 3 or later.
+
+    This program comes with ABSOLUTELY NO WARRANTY.
+    This is free software, and you are welcome to redistribute it
+    under certain conditions.
 
     You should have received a copy of the GNU General Public License
     along with this program. If not, see <https://www.gnu.org/licenses/>.

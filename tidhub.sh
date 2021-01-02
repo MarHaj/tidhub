@@ -467,6 +467,7 @@ case $1 in
   view)
     shift # to provide keylist
     view_wikis "$@"
+    ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage
     ;;

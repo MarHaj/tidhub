@@ -24,6 +24,12 @@ Tiddlywiki under Node.js (obviously)
 
 N.B.: **All preconfigured wikis has to reside under $HOME directory.**
 
+## Installation and running
+
+* Copy or move tidhub.sh into some directory on your PATH. I prefere either `~/bin/` or `~/.local/bin/`
+* cd into this directory and make tidhub.sh executable (e.g. chmod u+x tidhub.sh)
+* write in your terminal: `shamora.sh` and you will be presented with program usage options
+
 ## Timeline
 
 * Project started on 2020-12-19.

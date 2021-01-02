@@ -13,6 +13,7 @@ declare -A WIKI # DO NOT CHANGE THIS
 # Key is the unique user defined identifier of user's wiki instance
 # Value is the path to the wiki instance — i.e. to the directory,
 # where 'tiddlywiki.info' file is at the top.
+# All paths must start with ~ prefix or equivalently with \$HOME.
 WIKI[hnts]=~/Notes/home_notes/
 WIKI[wnts]=~/Notes/work_notes/
 WIKI[train]=~/Training/my_journal/
@@ -24,6 +25,17 @@ wiki_status_csv="" # wiki status CSV list
 ### Functions definition
 ########################################
 
+
+########################################
+# Print TidHub version
+#
+# Outputs:
+#   STDOUT TidHub version info
+########################################
+print_version () {
+  echo "Version 1.00, date 2020-01-02"
+}
+########################################
 
 ########################################
 # Check existence of rcfile and
@@ -117,7 +129,7 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, ss, kill,
+    Tiddlywiki on Node.js, awk, sed, pgrep, ss,
     xdg-open|x-wwwbrowser|sensible-browser
 _EOF_
 }
@@ -247,17 +259,6 @@ print_status () {
     awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
   echo "-------"
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
-}
-########################################
-
-########################################
-# Print TidHub version
-#
-# Outputs:
-#   STDOUT TidHub version info
-########################################
-print_version () {
-  echo "Printing version"
 }
 ########################################
 
@@ -471,12 +472,13 @@ stop_wikis () {
 ########################################
 ### Main
 ########################################
+main () {
 # Prepare
 check_rc
 source "$rcfile"
 wiki_status_csv=$(mk_wiki_status)
 
-# Read opts and run service functions accordingly
+# Read opts/args and run service functions accordingly
 case $1 in
   -h | --help)
     print_usage
@@ -488,25 +490,26 @@ case $1 in
     print_version
     ;;
   start)
-    shift # to provide keylist
+    shift # necessary shift to provide start with keylist
     start_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status) # updated status
+    wiki_status_csv=$(mk_wiki_status) # view updated status
     print_status
     ;;
   stop)
-    shift # to provide keylist
+    shift # necessary shift to provide stop with keylist
     stop_wikis "$@"
-    wiki_status_csv=$(mk_wiki_status) # updated status
+    wiki_status_csv=$(mk_wiki_status) # view updated status
     print_status
     ;;
   view)
-    shift # to provide keylist
+    shift # necessary shift to provide view with keylist
     view_wikis "$@"
     ;;
   *)
     [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage
     ;;
 esac
-exit
+}
 ########################################
 
+main "$@"

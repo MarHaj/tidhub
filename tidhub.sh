@@ -177,7 +177,7 @@ merge_csv () {
   while IFS=, read -r -a conf_line; do # loop config
     output_line=$(printf '%s,%s,%s,%s\n' "${conf_line[@]}")
     while IFS=, read -r -a live_line; do # loop live
-      if [[ "${conf_line[1]}" = "${live_line[1]}" ]]; then # merge lines
+      if [[ "${conf_line[1]}" == "${live_line[1]}" ]]; then # merge lines
         output_line="${conf_line[0]},${conf_line[1]},${live_line[2]},${live_line[3]}"
         live_list=$(echo "$live_list" \
           | sed "/${live_line[3]}/d") # remove this line from live_list

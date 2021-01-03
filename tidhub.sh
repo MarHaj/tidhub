@@ -33,7 +33,7 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.00, date 2021-01-02"
+  echo "Version 1.0.0, date 2021-01-02"
 }
 ########################################
 
@@ -134,15 +134,13 @@ Requirements:
     xdg-open|x-wwwbrowser|sensible-browser
 
 Copyright notice:
-    Copyright  2021 Martin Hájek <marhaj at gmx.com>
-    under GNU General Public Licence version 3 or later.
+    Copyright  2021 MarHaj at https://github.com/MarHaj/
+    under GNU General Public Licence version 3 or later:
+    https://www.gnu.org/licenses/gpl-3.0.txt
 
     This program comes with ABSOLUTELY NO WARRANTY.
     This is free software, and you are welcome to redistribute it
-    under certain conditions.
-
-    You should have received a copy of the GNU General Public License
-    along with this program. If not, see <https://www.gnu.org/licenses/>.
+    under conditions of GNU GPL Licence.
 _EOF_
 }
 ########################################

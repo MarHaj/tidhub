@@ -1,41 +1,41 @@
 # TidHub
 
-Running several wikis via Tiddlywiki on Node.js from a command line can be a kind of pain in the ass. Especially if you run wikis in the background, use many terminals and forgot from which one you have run them or forgot which ports you have assigned assigned to them etc.
+Running several wikis via `Tiddlywiki` on `Node.js` from a command line can be a kind of pain in the ass. Especially if you run wikis in the background, use many terminals and have forgotten from which one you had run them or which ports you had assigned to them etc.
 
-TidHub is a simple bash script that greatly simplifies management of wikis on your machine. Instead of remembering or finding paths, pids, ports it introduces concept of wiki *keys*. Wiki keys are easy-to-write aliases to wikis on your computer which you define by yourself.
+TidHub is a simple bash script that greatly simplifies management of wikis on your machine. Instead of remembering or finding paths, pids, ports it introduces concept of wiki *keys*. These Wiki keys are easy-to-write aliases to wikis on your computer which you define by yourself.
 
-TidHub utilizes central user defined wiki key list in very simple config file, which is created as a template (if user interactively agrees) by the program itself. You have to only edit this template.
+TidHub utilizes wiki keys list that is stored in a very simple config file. The config file template is created (if the user interactively agrees) by the program itself. You only have to edit this template.
 
-TidHub provides the following functionality:
+## Functionality
 
-* Starts all|selected wikis in the background (while automatically chooses tcp port to be listened).
-* Views all|selected wikis in the default browser as http://localhost:port page.
-* Views status of all preconfigured wikis: key (aka user shorcut), path, pid, port in one well-arranged table.
-* Stops all|selected wikis (while automatically finds appropriate pid to be killed)
+TidHub
+
+* **Starts** all|selected wikis in the background while automatically chooses tcp port to be listened.
+* **Views** all|selected wikis in the default browser as http://localhost:port page.
+* **Stops** all|selected wikis while automatically finds appropriate pid to be killed.
+* **Prints** info status of all preconfigured wikis: key, path, pid, port in one well-arranged table.
 
 TidHub has also quite detailed documentation about program usage and config file setup.
 
 ## Requirements
 
 * Linux
-Tiddlywiki under Node.js (obviously)
+[Tiddlywiki ver. >= 5.1.22 on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js) (obviously) and at the least one wiki directory that contains Tiddlywiki server-related components
 * bash >= 4
 * awk, sed, ss, grep, pgrep, xdg-open|x-wwwbrowser|sensible-browser
 
-N.B.: **All preconfigured wikis has to reside under $HOME directory.**
-
 ## Installation and running
 
-* Copy or move tidhub.sh into some directory on your PATH. I prefere either `~/bin/` or `~/.local/bin/`
-* cd into this directory and make tidhub.sh executable (e.g. chmod u+x tidhub.sh)
-* write in your terminal: `shamora.sh` and you will be presented with program usage options
+1. Copy or move `tidhub.sh` into some directory on your PATH. I prefer either `~/bin/` or `~/.local/bin/`
+2. cd into this directory and make `tidhub.sh` executable (e.g. chmod u+x `tidhub.sh`)
+3. Write into your terminal: `tidhub.sh` and you will be presented with program usage options or with an offer to create config file template.
 
 ## Timeline
 
 * Project started on 2020-12-19.
 * Version 1.0.0 released on 2021-01-03.
 
-## Acknowledgement
+## Acknowledgment
 
 Special thanks to
 

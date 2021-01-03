@@ -13,7 +13,6 @@ declare -A WIKI # DO NOT CHANGE THIS
 # Key is the unique user defined identifier of user's wiki instance
 # Value is the path to the wiki instance — i.e. to the directory,
 # where 'tiddlywiki.info' file is at the top.
-# All paths must start with ~ prefix or equivalently with \$HOME.
 WIKI[hnts]=~/Notes/home_notes/
 WIKI[wnts]=~/Notes/work_notes/
 WIKI[train]=~/Training/my_journal/
@@ -33,7 +32,20 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.0.0, date 2021-01-02"
+  echo "Version 1.0.0, date 2021-01-03"
+}
+########################################
+
+########################################
+# Print short usage
+########################################
+print_usage () {
+  cat << _EOF_
+Usage: tidhub.sh [option] | [command] [keylist]
+  Options: [-h|--help] | [-s|--status] | [-v|--version]
+  Commands: start | stop | view
+    Keylist: space separated wiki keys (see --help)
+_EOF_
 }
 ########################################
 
@@ -83,16 +95,16 @@ check_rc () {
 ########################################
 
 ########################################
-# Print TidHub usage
+# Print detailed help
 ########################################
-print_usage (){
+print_help (){
 
-cat << _EOF_
+  cat << _EOF_
 Purpose:
   Manage multiple local 'Tiddlywikis' on 'Node.js'
 
 Usage:
-  There are two modes of usage, Informative and Executive.
+  There are two modes of usage: Informative and Executive.
 
   Informative mode of usage: tidhub.sh [option]
     Options:
@@ -100,17 +112,17 @@ Usage:
                             command is provided)
       [-s|--status]         print status info about configured and running wikis
       [-v|--version]        print program version
+      [ ]                   print short usage info
 
   Executive mode of usage: tidhub command [keylist]
     Commands:
-      start                 start wikis according keylist option provided
-                            nad view them in the default browser
-      stop                  stop wikis according keylist option provided
+      start                 start wikis
+      stop                  stop wikis
       view                  view vikis in the default browser
-    Options:
+
       [keylist]             list of wiki keys (see below) separated by space.
-                            If no keylist provided, then command will be
-                            executed on all configured or running wikis
+                            If no keylist is provided, then command will be
+                            executed on all configured wikis possible.
 
   Usage examples:
     tidhub -s               print status info about wikis
@@ -164,8 +176,7 @@ conf2csv () {
 
 ########################################
 # Make CSV list of live wikis
-# using output from command 'pgrep - a node'
-# Filter ouput only to items where command line containing 'tiddlywiki' word
+# Filter ouput only to processes that contain 'tiddlywiki' word in command line
 #
 # Outputs:
 #   STDOUT: CSV list of running wikis: ,path,pid,port
@@ -213,9 +224,8 @@ merge_csv () {
 ########################################
 
 ########################################
-# Create nice global wiki_status_csv list
+# Create global wiki_status_csv list
 # If config path does not point to tiddlywiki.info then replace it by 'WNA'.
-# Also shorten path to ~/something nicely.
 #
 # Globals:
 #   wiki_status_csv: changed
@@ -228,27 +238,22 @@ mk_wiki_status () {
   wiki_status_csv=""
 
   while IFS=, read -r -a line; do
-    if [[ -f "${line[1]}tiddlywiki.info" ]]; then
-      line[1]="~/${line[1]#/*/*/}"
-    else
-      line[1]="WNA"
-    fi
-    # (( mx < ${#line[1]} )) && mx=${#line[1]} # TODO: remove this line
-     echo "${line[0]},${line[1]},${line[2]},${line[3]}"
+    [[ -f "${line[1]}tiddlywiki.info" ]] || line[1]="WNA"
+    echo "${line[0]},${line[1]},${line[2]},${line[3]}"
   done <<< $(merge_csv)
 }
 
 ########################################
-# Prints formatted wiki status
+# Prints formatted wiki status with header and footer
 #
 # Globals:
 #   wiki_status_csv: used
 #
 # Outputs:
-#   STDOUT: formatted list: key,path,pid,port + footer if WMA found
+#   STDOUT: CSV list: key,path,pid,port + footer if WMA found
 #
 # Requires:
-#   EXT: sed, awk, sort
+#   EXT: sed, awk, sort, grep
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT"
@@ -265,9 +270,9 @@ print_status () {
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  echo -e "-------\n${header}\n${wiki_status_csv}" | \
-    awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
-  echo "-------"
+  echo -e "--------\n${header}\n${wiki_status_csv}" | \
+    awk -F, '{ printf "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
+  echo "--------"
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
 }
 ########################################
@@ -393,8 +398,7 @@ start_wikis () {
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
     key=${line[0]}
-    # IMPORTANT restore path from '~/…' to '$HOME/…' on the next line
-    path_arr[$key]="$HOME/${line[1]#*/}"
+    path_arr[$key]="${line[1]}"
     wport=$(get_free_port tcp_range tcp_busy)
     port_arr[$key]=$wport
     tcp_busy+=($wport) # after assignment make port looks like busy
@@ -491,7 +495,7 @@ wiki_status_csv=$(mk_wiki_status)
 # Read opts/args and run service functions accordingly
 case $1 in
   -h | --help)
-    print_usage
+    print_help
     ;;
   -s | --status)
     print_status

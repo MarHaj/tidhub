@@ -22,8 +22,6 @@ Tiddlywiki under Node.js (obviously)
 * bash >= 4
 * awk, sed, ss, grep, pgrep, xdg-open|x-wwwbrowser|sensible-browser
 
-N.B.: **All preconfigured wikis has to reside under $HOME directory.**
-
 ## Installation and running
 
 * Copy or move tidhub.sh into some directory on your PATH. I prefere either `~/bin/` or `~/.local/bin/`

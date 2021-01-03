@@ -32,7 +32,20 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.0.0, date 2021-01-02"
+  echo "Version 1.0.0, date 2021-01-03"
+}
+########################################
+
+########################################
+# Print short usage
+########################################
+print_usage () {
+  cat << _EOF_
+Usage: tidhub.sh [option] | [command] [keylist]
+  Options: [-h|--help] | [-s|--status] | [-v|--version]
+  Commands: start | stop | view
+    Keylist: space separated wiki keys (see --help)
+_EOF_
 }
 ########################################
 
@@ -82,16 +95,16 @@ check_rc () {
 ########################################
 
 ########################################
-# Print TidHub usage
+# Print detailed help
 ########################################
-print_usage (){
+print_help (){
 
-cat << _EOF_
+  cat << _EOF_
 Purpose:
   Manage multiple local 'Tiddlywikis' on 'Node.js'
 
 Usage:
-  There are two modes of usage, Informative and Executive.
+  There are two modes of usage: Informative and Executive.
 
   Informative mode of usage: tidhub.sh [option]
     Options:
@@ -99,17 +112,17 @@ Usage:
                             command is provided)
       [-s|--status]         print status info about configured and running wikis
       [-v|--version]        print program version
+      [ ]                   print short usage info
 
   Executive mode of usage: tidhub command [keylist]
     Commands:
-      start                 start wikis according keylist option provided
-                            nad view them in the default browser
-      stop                  stop wikis according keylist option provided
+      start                 start wikis
+      stop                  stop wikis
       view                  view vikis in the default browser
-    Options:
+
       [keylist]             list of wiki keys (see below) separated by space.
-                            If no keylist provided, then command will be
-                            executed on all configured or running wikis
+                            If no keylist is provided, then command will be
+                            executed on all configured wikis possible.
 
   Usage examples:
     tidhub -s               print status info about wikis
@@ -482,7 +495,7 @@ wiki_status_csv=$(mk_wiki_status)
 # Read opts/args and run service functions accordingly
 case $1 in
   -h | --help)
-    print_usage
+    print_help
     ;;
   -s | --status)
     print_status

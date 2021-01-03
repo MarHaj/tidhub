@@ -13,6 +13,7 @@ declare -A WIKI # DO NOT CHANGE THIS
 # Key is the unique user defined identifier of user's wiki instance
 # Value is the path to the wiki instance — i.e. to the directory,
 # where 'tiddlywiki.info' file is at the top.
+# All paths must start with ~ prefix or equivalently with \$HOME.
 WIKI[hnts]=~/Notes/home_notes/
 WIKI[wnts]=~/Notes/work_notes/
 WIKI[train]=~/Training/my_journal/
@@ -212,8 +213,9 @@ merge_csv () {
 ########################################
 
 ########################################
-# Create global wiki_status_csv list
+# Create nice global wiki_status_csv list
 # If config path does not point to tiddlywiki.info then replace it by 'WNA'.
+# Also shorten path to ~/something nicely.
 #
 # Globals:
 #   wiki_status_csv: changed
@@ -226,22 +228,27 @@ mk_wiki_status () {
   wiki_status_csv=""
 
   while IFS=, read -r -a line; do
-    [[ -f "${line[1]}tiddlywiki.info" ]] || line[1]="WNA"
-    echo "${line[0]},${line[1]},${line[2]},${line[3]}"
+    if [[ -f "${line[1]}tiddlywiki.info" ]]; then
+      line[1]="~/${line[1]#/*/*/}"
+    else
+      line[1]="WNA"
+    fi
+    # (( mx < ${#line[1]} )) && mx=${#line[1]} # TODO: remove this line
+     echo "${line[0]},${line[1]},${line[2]},${line[3]}"
   done <<< $(merge_csv)
 }
 
 ########################################
-# Prints formatted wiki status with header and footer
+# Prints formatted wiki status
 #
 # Globals:
 #   wiki_status_csv: used
 #
 # Outputs:
-#   STDOUT: CSV list: key,path,pid,port + footer if WMA found
+#   STDOUT: formatted list: key,path,pid,port + footer if WMA found
 #
 # Requires:
-#   EXT: sed, awk, sort, grep
+#   EXT: sed, awk, sort
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT"
@@ -258,9 +265,9 @@ print_status () {
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  echo -e "--------\n${header}\n${wiki_status_csv}" | \
-    awk -F, '{ printf "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
-  echo "--------"
+  echo -e "-------\n${header}\n${wiki_status_csv}" | \
+    awk -F, '{ printf "%-7s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
+  echo "-------"
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
 }
 ########################################
@@ -386,6 +393,8 @@ start_wikis () {
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
     key=${line[0]}
+    # IMPORTANT restore path from '~/…' to '$HOME/…' on the next line
+    path_arr[$key]="$HOME/${line[1]#*/}"
     wport=$(get_free_port tcp_range tcp_busy)
     port_arr[$key]=$wport
     tcp_busy+=($wport) # after assignment make port looks like busy

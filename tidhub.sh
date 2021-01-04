@@ -84,7 +84,7 @@ check_rc () {
         echo "You should edit it to reflect your own wikis placement."
       else
         echo -e "\nUnable to create '$rcfile'. Something is wrong." >&2
-        exit 2
+        exit 1
       fi
     else
       echo -e "\nAnswer unregognized." >&2
@@ -195,6 +195,7 @@ live2csv () {
 ########################################
 # Merge conf and live CSV lists
 # Merging based on common field "path to wiki"
+# Output also live and not configured wikis
 #
 # Outputs:
 #   STDOUT: csv status list: key,path,pid,port
@@ -206,6 +207,7 @@ merge_csv () {
   local live_line
   local conf_line
   local output_line=""
+  local live_list="$(live2csv)"
 
   while IFS=, read -r -a conf_line; do # loop config
     output_line=$(printf '%s,%s,%s,%s\n' "${conf_line[@]}")
@@ -404,14 +406,18 @@ start_wikis () {
     tcp_busy+=($wport) # after assignment make port looks like busy
   done <<< "$(echo "$wiki_status_csv" \
     | grep -v ',WNA,\|[0-9]\+$')" # !! wikis ready to start (not WNA or running)
+
+# Verify for each case arrays are of equal length
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
     && echo "Unexpected error" >&2 \
     && exit 1
 
-# Start all wikis
+# Start all wikis # FIXME
   if [[ $# -eq 0 ]]; then
     for key in ${!path_arr[@]}; do
-      echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
+      echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+      tiddlywiki "${path_arr[$key]}" \
+        --listen port=${port_arr[$key]} &>/dev/null &
       (( started+=1 ))
     done
   fi
@@ -420,11 +426,9 @@ start_wikis () {
   while (( $# > 0 )); do # args cycle
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
-        echo "Startinq wiki $key on '${path_arr[$key]}' and ${port_arr[$key]}"
-        tiddlywiki \
-          ${path_arr[$key]} \
-          --listen port=${port_arr[$key]} \
-          &>/dev/null &
+        echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+        tiddlywiki "${path_arr[$key]}" \
+          --listen port=${port_arr[$key]} &>/dev/null &
         unset path_arr[$key]
         unset port_arr[$key]
         (( started+=1 ))

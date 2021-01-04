@@ -20,14 +20,14 @@ TidHub has also quite detailed documentation about program usage and config file
 ## Requirements
 
 * Linux
-[Tiddlywiki ver. >= 5.1.22 on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js) (obviously) and at the least one wiki directory that contains Tiddlywiki server-related components
+[Tiddlywiki ver. >= 5.1.22 on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js) (obviously) and at the least one directory containing Tiddlywiki server-related components
 * bash >= 4
 * awk, sed, ss, grep, pgrep, xdg-open|x-wwwbrowser|sensible-browser
 
 ## Installation and running
 
 1. Copy or move `tidhub.sh` into some directory on your PATH. I prefer either `~/bin/` or `~/.local/bin/`
-2. cd into this directory and make `tidhub.sh` executable (e.g. chmod u+x `tidhub.sh`)
+2. cd into this directory and make `tidhub.sh` file permission executable (e.g. chmod u+x `tidhub.sh`)
 3. Write into your terminal: `tidhub.sh` and you will be presented with program usage options or with an offer to create config file template.
 
 ## Timeline

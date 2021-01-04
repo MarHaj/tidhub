@@ -454,34 +454,40 @@ start_wikis () {
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
-  declare -A pids_arr # associative array ( key pid ) of all running wikis
+  declare -A pids_arr # associative array ( key pid ) of running & conf wikis
   local line
-  local i
+  local pid
 
-# Get pids_arr=( key pid ) of running wikis
-  while IFS="," read -a line; do # line array=( key path pid port )
-    [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
-  done <<< "$wiki_status_csv"
-
-# Kill all running wikis FIXME including those not configured
+  # Kill all running wikis including those not configured
   if [[ $# -eq 0 ]]; then
-    for i in ${pids_arr[@]}; do
-      kill $i || kill -9 $i \
-        && (( killed+=1 ))
-    done
+    while IFS="," read -a line; do # line array=(- - pid -)
+      pid=${line[2]}
+      if [[ $pid ]]; then
+        kill $pid || kill -9 $pid && (( killed+=1 ))
+      fi
+    done <<< "$wiki_status_csv"
   fi
 
-# Kill wikis according keys provided by CLI, prevent multiple kills of one key
-  while (( $# > 0 )); do # args cycle
-    for i in ${!pids_arr[@]}; do
-      if [[ "$1" == "$i" ]]; then
-        kill ${pids_arr[$i]} || kill -9 ${pids_arr[$i]} \
-          && unset pids_arr[$i] \
-          && (( killed+=1 ))
-      fi
+  # Kill some configured wikis according keylist
+  # and prevent multiple kills of one key
+  if [[ $# -gt 0 ]]; then
+    # Get pids_arr=( key pid ) of running & configure wikis
+    while IFS="," read -a line; do # line array=( key path pid port )
+      [[ ${line[0]} ]] && [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
+    done <<< "$wiki_status_csv"
+    # Kill them according keylist
+    while (( $# > 0 )); do # args cycle
+      for i in ${!pids_arr[@]}; do
+        if [[ "$1" == "$i" ]]; then
+          pid=${pids_arr[$i]}
+          kill $pid || kill -9 $pid \
+            && unset pids_arr[$i] \
+            && (( killed+=1 ))
+        fi
+      done
+      shift
     done
-    shift
-  done
+  fi
   echo "Stopped total: $killed"
 }
 ########################################

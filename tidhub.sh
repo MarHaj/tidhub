@@ -463,7 +463,7 @@ stop_wikis () {
     [[ -n "${line[2]}" ]] && pids_arr[${line[0]}]=${line[2]}
   done <<< "$wiki_status_csv"
 
-# Kill all wikis
+# Kill all running wikis FIXME including those not configured
   if [[ $# -eq 0 ]]; then
     for i in ${pids_arr[@]}; do
       kill $i || kill -9 $i \

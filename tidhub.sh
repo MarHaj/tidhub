@@ -32,7 +32,7 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.0.0, date 2021-01-03"
+  echo "Version 0.1.0, date 2021-01-03"
 }
 ########################################
 
@@ -280,6 +280,32 @@ print_status () {
 ########################################
 
 ########################################
+# Run provided url in the default browser
+#
+# Arguments:
+#   $1: url
+#
+# Outputs:
+#   STDERR: if requirements are not met
+#
+# RETURNS
+#   exit 2: if requirements are not met
+#
+# Requires:
+#   EXT: xdg-open|x-www-browser|sensible-browser
+########################################
+run_browser () {
+  local url=$1
+  local msg="Failed requirement:
+ 'xdg-open'|'x-www-browser'|'sensible-browser' installed"
+
+  xdg-open $url 2>/dev/null \
+  || x-www-browser $url 2>/dev/null \
+  || sensible-browser $url 2>/dev/null \
+  || ( echo "$msg" >&2; exit 2 )
+}
+
+########################################
 # View all/selected running wikis in the default browser
 #
 # Globals:
@@ -287,6 +313,9 @@ print_status () {
 #
 # Arguments:
 #   [keylist]: space separated list of wikis key to stop, default is stop all
+#
+# Requires:
+#   INT: run_browser
 ########################################
 view_wikis () {
   declare -A ports_arr # associative array ( key port) of all running wikis
@@ -305,17 +334,16 @@ view_wikis () {
   if [[ $# -eq 0 ]]; then
     for i in ${ports_arr[@]}; do
       url+=$i
-      xdg-open $url || x-www-browser $url || sensible-browser $url
+      run_browser $url
     done
   fi
 
-# View wikis according keys provided by CLI, prevent multiple views of one key
+# View wikis according keylist, prevent multiple views of one key
   while (( $# > 0 )); do # args cycle
     for i in ${!ports_arr[@]}; do
       if [[ "$1" == "$i" ]]; then
         url+=${ports_arr[$i]}
-        xdg-open $url || x-www-browser $url || sensible-browser $url \
-          && unset ports_arr[$i]
+        run_browser $url && unset ports_arr[$i]
       fi
     done
     shift
@@ -400,7 +428,7 @@ start_wikis () {
 # Get busy tcp_busy with ss|nestat
   wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
   [[ $? -ne 0 ]] \
-    && echo "Requirement 'ss' or 'netstat' installed is NOT met" >&2 \
+    && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
     && exit 2
   tcp_busy=( $(echo "$wport" \
     | awk '/LISTEN/ { print $4 }' \

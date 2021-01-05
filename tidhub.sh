@@ -398,13 +398,17 @@ start_wikis () {
   declare -A port_arr
 
 # Get busy tcp ports with ss|nestat
-  tcp_busy=( $(ss -tln 2>/dev/null \
+  wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
+  [[ $? -ne 0 ]] \
+    && echo "Requirement 'ss' or 'netstat' installed is NOT met" >&2 \
+    && exit 2
+  tcp_busy=( $(echo "$wport" \
     | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) \
-  || tcp_busy=( $(netstat -tln 2>/dev/null \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) \
-  || echo "Tidhub requires 'ss' or 'netstat' utils installed" >&2 && exit 2
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') )
+
+  # FIXME: testing lines
+  echo "Busy ports: ${tcp_busy[@]}"
+  exit
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )

@@ -142,7 +142,7 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, ss,
+    Tiddlywiki on Node.js, awk, sed, pgrep, ss|netstat
     xdg-open|x-wwwbrowser|sensible-browser
 
 Copyright notice:
@@ -397,7 +397,7 @@ start_wikis () {
   declare -A path_arr
   declare -A port_arr
 
-# Get busy tcp ports with ss|nestat
+# Get busy tcp_busy with ss|nestat
   wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
   [[ $? -ne 0 ]] \
     && echo "Requirement 'ss' or 'netstat' installed is NOT met" >&2 \
@@ -405,10 +405,6 @@ start_wikis () {
   tcp_busy=( $(echo "$wport" \
     | awk '/LISTEN/ { print $4 }' \
     | awk -F: '$2 ~ /[0-9]+/ { print $2 }') )
-
-  # FIXME: testing lines
-  echo "Busy ports: ${tcp_busy[@]}"
-  exit
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
@@ -425,23 +421,25 @@ start_wikis () {
     && echo "Unexpected error" >&2 \
     && exit 1
 
-# Start all wikis # FIXME
+# Start all wikis available to start in bgr
   if [[ $# -eq 0 ]]; then
     for key in ${!path_arr[@]}; do
-      echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
       tiddlywiki "${path_arr[$key]}" \
         --listen port=${port_arr[$key]} &>/dev/null &
+      echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+      sleep 0.5
       (( started+=1 ))
     done
   fi
 
-# Start wikis in bgr according keys from CLI, prevent multiple starts one key
+# Start wikis according keylist in bgr, prevent multiple starts one key
   while (( $# > 0 )); do # args cycle
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
-        echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
         tiddlywiki "${path_arr[$key]}" \
           --listen port=${port_arr[$key]} &>/dev/null &
+        echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+        sleep 0.5
         unset path_arr[$key]
         unset port_arr[$key]
         (( started+=1 ))
@@ -471,18 +469,21 @@ stop_wikis () {
   local line
   local pid
 
-  # Kill all running wikis including those not configured
+  # Kill all running wikis (having pid) including those not configured
   if [[ $# -eq 0 ]]; then
-    while IFS="," read -a line; do # line array=(- - pid -)
+    while IFS="," read -a line; do # line array=(key|'' path pid port)
       pid=${line[2]}
       if [[ $pid ]]; then
-        kill $pid || kill -9 $pid && (( killed+=1 ))
+        kill $pid || kill -9 $pid \
+          && echo "Stopped wiki ${line[0]} pid '$pid'" \
+          && sleep 0.5 \
+          && (( killed+=1 ))
       fi
     done <<< "$wiki_status_csv"
   fi
 
-  # Kill some configured wikis according keylist
-  # and prevent multiple kills of one key
+  # Kill configured wikis according keylist
+  # and prevent multiple kills of repeating key on keylist
   if [[ $# -gt 0 ]]; then
     # Get pids_arr=( key pid ) of running & configure wikis
     while IFS="," read -a line; do # line array=( key path pid port )
@@ -494,6 +495,8 @@ stop_wikis () {
         if [[ "$1" == "$i" ]]; then
           pid=${pids_arr[$i]}
           kill $pid || kill -9 $pid \
+            && echo "Stopped wiki $i pid '$pid'" \
+            && sleep 0.5 \
             && unset pids_arr[$i] \
             && (( killed+=1 ))
         fi

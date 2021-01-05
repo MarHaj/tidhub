@@ -377,25 +377,34 @@ get_free_port () {
 # OUTPUTS:
 #   STDOUT: total count of started wikis
 #   STDERR: if (key path) and (key port) arrays are of unequal lengths
+#   STDERR: if neither ss|netstat is not installed
 #
 # RETURNS:
-#   exit 1: if error above occurres
+#   exit 1: if (key path) and (key port) arrays are of unequal lengths
+#   exit 2: if neither ss|netstat is not installed
 #
 # Requires:
 #   INT: get_free_port
-#   EXT: awk
+#   EXT: awk, ss|netstat
 ########################################
 start_wikis () {
   local tcp_range=( {8001..8050} ) # array of ports to select from
-  local tcp_busy=( $(ss -tl \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local tcp_busy # array of already listening ports
   local started=0 # total started count
   local line # line array
   local wport
   local key
   declare -A path_arr
   declare -A port_arr
+
+# Get busy tcp ports with ss|nestat
+  tcp_busy=( $(ss -tln 2>/dev/null \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) \
+  || tcp_busy=( $(netstat -tln 2>/dev/null \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) \
+  || echo "Tidhub requires 'ss' or 'netstat' utils installed" >&2 && exit 2
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )

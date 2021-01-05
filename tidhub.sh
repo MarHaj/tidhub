@@ -32,7 +32,7 @@ wiki_status_csv="" # wiki status CSV list
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 1.0.0, date 2021-01-03"
+  echo "Version 0.1.0, date 2021-01-03"
 }
 ########################################
 
@@ -142,7 +142,7 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, ss,
+    Tiddlywiki on Node.js, awk, sed, pgrep, ss|netstat
     xdg-open|x-wwwbrowser|sensible-browser
 
 Copyright notice:
@@ -280,6 +280,32 @@ print_status () {
 ########################################
 
 ########################################
+# Run provided url in the default browser
+#
+# Arguments:
+#   $1: url
+#
+# Outputs:
+#   STDERR: if requirements are not met
+#
+# RETURNS
+#   exit 2: if requirements are not met
+#
+# Requires:
+#   EXT: xdg-open|x-www-browser|sensible-browser
+########################################
+run_browser () {
+  local url=$1
+  local msg="Failed requirement:
+ 'xdg-open'|'x-www-browser'|'sensible-browser' installed"
+
+  xdg-open $url 2>/dev/null \
+  || x-www-browser $url 2>/dev/null \
+  || sensible-browser $url 2>/dev/null \
+  || ( echo "$msg" >&2; exit 2 )
+}
+
+########################################
 # View all/selected running wikis in the default browser
 #
 # Globals:
@@ -287,6 +313,9 @@ print_status () {
 #
 # Arguments:
 #   [keylist]: space separated list of wikis key to stop, default is stop all
+#
+# Requires:
+#   INT: run_browser
 ########################################
 view_wikis () {
   declare -A ports_arr # associative array ( key port) of all running wikis
@@ -305,17 +334,16 @@ view_wikis () {
   if [[ $# -eq 0 ]]; then
     for i in ${ports_arr[@]}; do
       url+=$i
-      xdg-open $url || x-www-browser $url || sensible-browser $url
+      run_browser $url
     done
   fi
 
-# View wikis according keys provided by CLI, prevent multiple views of one key
+# View wikis according keylist, prevent multiple views of one key
   while (( $# > 0 )); do # args cycle
     for i in ${!ports_arr[@]}; do
       if [[ "$1" == "$i" ]]; then
         url+=${ports_arr[$i]}
-        xdg-open $url || x-www-browser $url || sensible-browser $url \
-          && unset ports_arr[$i]
+        run_browser $url && unset ports_arr[$i]
       fi
     done
     shift
@@ -377,25 +405,34 @@ get_free_port () {
 # OUTPUTS:
 #   STDOUT: total count of started wikis
 #   STDERR: if (key path) and (key port) arrays are of unequal lengths
+#   STDERR: if neither ss|netstat is not installed
 #
 # RETURNS:
-#   exit 1: if error above occurres
+#   exit 1: if (key path) and (key port) arrays are of unequal lengths
+#   exit 2: if neither ss|netstat is not installed
 #
 # Requires:
 #   INT: get_free_port
-#   EXT: awk
+#   EXT: awk, ss|netstat
 ########################################
 start_wikis () {
   local tcp_range=( {8001..8050} ) # array of ports to select from
-  local tcp_busy=( $(ss -tl \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') ) # array of already listening ports
+  local tcp_busy # array of already listening ports
   local started=0 # total started count
   local line # line array
   local wport
   local key
   declare -A path_arr
   declare -A port_arr
+
+# Get busy tcp_busy with ss|nestat
+  wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
+  [[ $? -ne 0 ]] \
+    && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
+    && exit 2
+  tcp_busy=( $(echo "$wport" \
+    | awk '/LISTEN/ { print $4 }' \
+    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') )
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
@@ -412,23 +449,25 @@ start_wikis () {
     && echo "Unexpected error" >&2 \
     && exit 1
 
-# Start all wikis # FIXME
+# Start all wikis available to start in bgr
   if [[ $# -eq 0 ]]; then
     for key in ${!path_arr[@]}; do
-      echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
       tiddlywiki "${path_arr[$key]}" \
         --listen port=${port_arr[$key]} &>/dev/null &
+      echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+      sleep 0.5
       (( started+=1 ))
     done
   fi
 
-# Start wikis in bgr according keys from CLI, prevent multiple starts one key
+# Start wikis according keylist in bgr, prevent multiple starts one key
   while (( $# > 0 )); do # args cycle
     for key in ${!path_arr[@]}; do
       if [[ "$1" == "$key" ]]; then
-        echo "Startinq wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
         tiddlywiki "${path_arr[$key]}" \
           --listen port=${port_arr[$key]} &>/dev/null &
+        echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+        sleep 0.5
         unset path_arr[$key]
         unset port_arr[$key]
         (( started+=1 ))
@@ -458,18 +497,21 @@ stop_wikis () {
   local line
   local pid
 
-  # Kill all running wikis including those not configured
+  # Kill all running wikis (having pid) including those not configured
   if [[ $# -eq 0 ]]; then
-    while IFS="," read -a line; do # line array=(- - pid -)
+    while IFS="," read -a line; do # line array=(key|'' path pid port)
       pid=${line[2]}
       if [[ $pid ]]; then
-        kill $pid || kill -9 $pid && (( killed+=1 ))
+        kill $pid || kill -9 $pid \
+          && echo "Stopped wiki ${line[0]} pid '$pid'" \
+          && sleep 0.5 \
+          && (( killed+=1 ))
       fi
     done <<< "$wiki_status_csv"
   fi
 
-  # Kill some configured wikis according keylist
-  # and prevent multiple kills of one key
+  # Kill configured wikis according keylist
+  # and prevent multiple kills of repeating key on keylist
   if [[ $# -gt 0 ]]; then
     # Get pids_arr=( key pid ) of running & configure wikis
     while IFS="," read -a line; do # line array=( key path pid port )
@@ -481,6 +523,8 @@ stop_wikis () {
         if [[ "$1" == "$i" ]]; then
           pid=${pids_arr[$i]}
           kill $pid || kill -9 $pid \
+            && echo "Stopped wiki $i pid '$pid'" \
+            && sleep 0.5 \
             && unset pids_arr[$i] \
             && (( killed+=1 ))
         fi

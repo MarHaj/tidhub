@@ -255,7 +255,7 @@ mk_wiki_status () {
 #   STDOUT: CSV list: key,path,pid,port + footer if WMA found
 #
 # Requires:
-#   EXT: sed, awk, sort, grep
+#   EXT: awk, grep
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT"
@@ -264,10 +264,7 @@ print_status () {
 
 # determine max path length for formatting purpose
   mxpl=$(echo "${wiki_status_csv}" \
-    | awk -F, '{ print $2 }' \
-    | awk '{ print length}' \
-    | sort -nr \
-    | sed '1!d'
+    | awk -F, '{ if (length($2) > max) max = length($2)} END { print max }'
   )
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 

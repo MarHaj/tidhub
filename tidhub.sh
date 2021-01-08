@@ -1,18 +1,18 @@
 #!/bin/bash
 
 ########################################
-### Global constats/variables
+### Global constants/variables
 ########################################
 
-rcfile=~/.config/tidhub/tidhubrc
+declare -A WIKI # declare user defined associative array
+rcfile=~/.config/tidhub/tidhubrc # path to config file to be sourced from here
 rctempl="# This file is sourced from tidhub.sh
 
-declare -A WIKI # DO NOT CHANGE THIS
-
-# User wiki associative array definition: WIKI[key]=value
-# Key is the unique user defined identifier of user's wiki instance
-# Value is the path to the wiki instance — i.e. to the directory,
+# User wiki associative array definition: WIKI[key]=value.
+# 'Key' is the unique user defined identifier of user's wiki instance.
+# 'Value' is the path to the wiki instance — i.e. to the directory,
 # where 'tiddlywiki.info' file is at the top.
+
 WIKI[hnts]=~/Notes/home_notes/
 WIKI[wnts]=~/Notes/work_notes/
 WIKI[train]=~/Training/my_journal/
@@ -21,7 +21,7 @@ wiki_status_csv="" # wiki status CSV list
 
 
 ########################################
-### Functions definitions
+### Functions definitions follows
 ########################################
 
 

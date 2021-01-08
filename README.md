@@ -1,10 +1,10 @@
 # TidHub
 
-Running several wikis via `Tiddlywiki` on `Node.js` from a command line can be a kind of pain in the ass. Especially if you run wikis in the background, use many terminals and have forgotten from which one you had run them or which ports you had assigned to them etc.
+Running several wikis via `Tiddlywiki` on `Node.js` from a command line can be a kind of pain in the ass. Especially if you run wikis in the background, use many terminals and have forgotten from which one you had run them or which ports you had assigned to them.
 
 TidHub is a simple bash script that greatly simplifies management of wikis on your machine. Instead of remembering or finding paths, pids, ports it introduces concept of wiki *keys*. These Wiki keys are easy-to-write aliases to wikis on your computer which you define by yourself.
 
-TidHub utilizes wiki keys list that is stored in a very simple config file. The config file template is created (if the user interactively agrees) by the program itself. You only have to edit this template.
+TidHub utilizes wiki keys list that is stored in a very simple config file. The config file template is created (if the user interactively agrees) by the program itself. You only have to edit the template.
 
 ## Functionality
 
@@ -28,12 +28,16 @@ TidHub has also quite detailed documentation about program usage and config file
 
 1. Copy or move `tidhub.sh` into some directory on your PATH. I prefer either `~/bin/` or `~/.local/bin/`
 2. cd into this directory and make `tidhub.sh` file permission executable (e.g. chmod u+x `tidhub.sh`)
-3. Write into your terminal: `tidhub.sh` and you will be presented with program usage options or with an offer to create config file template.
+3. Write into your terminal: `tidhub.sh` and you will be presented with program usage options or — if configuration file is missing — with an offer to create config file template.
 
 ## Timeline
 
 * Project started on 2020-12-19.
-* Version 0.1.0 released on 2021-01-03.
+* Version 0.1.0 — all intended functionalities has been implemented — on 2021-01-03.
+
+## Alternatives
+
+* [TiddlyServer](https://arlen22.github.io/tiddlyserver/) is really an excellent option.
 
 ## Acknowledgment
 

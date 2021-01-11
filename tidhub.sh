@@ -80,8 +80,8 @@ _EOF_
 #
 # Returns:
 #   exit 0: user responds not to create file by tidhub
-#   exit 1: unable to create rcfile
-#   exit 2: unregognised user input
+#   exit 1: unregognised user input
+#   exit 2: unable to create rcfile
 ########################################
 check_rc () {
   local rcdir="${rcfile%/*}"
@@ -293,7 +293,7 @@ print_status () {
 #   STDERR: if requirements are not met
 #
 # RETURNS
-#   exit 2: if requirements are not met
+#   exit 3: if requirements are not met
 #
 # Requires:
 #   EXT: xdg-open|x-www-browser|sensible-browser
@@ -306,7 +306,7 @@ run_browser () {
   xdg-open $url 2>/dev/null \
   || x-www-browser $url 2>/dev/null \
   || sensible-browser $url 2>/dev/null \
-  || ( echo "$msg" >&2; exit 2 )
+  || ( echo "$msg" >&2; exit 3 )
 }
 
 ########################################
@@ -371,7 +371,7 @@ view_wikis () {
 #
 # RETURNS:
 #   return 0: success
-#   exit 1: no free TCP port in the range
+#   exit 2: no free TCP port in the range
 #
 # Reguires:
 #   EXT: ss, awk
@@ -393,7 +393,7 @@ get_free_port () {
     fi
   done
   echo "No free TCP port has been found in range ${range[@]}" >&2
-  exit 1 # cannot continue because no free port in the range has been found
+  exit 2 # cannot continue because no free port in the range has been found
 }
 ########################################
 
@@ -412,8 +412,8 @@ get_free_port () {
 #   STDERR: if neither ss|netstat is not installed
 #
 # RETURNS:
-#   exit 1: if (key path) and (key port) arrays are of unequal lengths
-#   exit 2: if neither ss|netstat is not installed
+#   exit 2: if (key path) and (key port) arrays are of unequal lengths
+#   exit 3: if requirements are not met
 #
 # Requires:
 #   INT: get_free_port
@@ -433,7 +433,7 @@ start_wikis () {
   wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
   [[ $? -ne 0 ]] \
     && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
-    && exit 2
+    && exit 3
   tcp_busy=( $(echo "$wport" \
     | awk '/LISTEN/ { print $4 }' \
     | awk -F: '$2 ~ /[0-9]+/ { print $2 }') )
@@ -451,7 +451,7 @@ start_wikis () {
 # Verify for each case arrays are of equal length
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
     && echo "Unexpected error" >&2 \
-    && exit 1
+    && exit 2
 
 # Start all wikis available to start in bgr
   if [[ $# -eq 0 ]]; then

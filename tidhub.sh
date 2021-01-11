@@ -26,13 +26,28 @@ wiki_status_csv="" # wiki status CSV list
 
 
 ########################################
-# Print TidHub version
+# Print TidHub version and copyright
 #
 # Outputs:
 #   STDOUT TidHub version info
 ########################################
 print_version () {
-  echo "Version 0.1.0, date 2021-01-03"
+  cat << _EOF_
+Version: 0.1.0, date 2021-01-03
+
+Copyright notice:
+    Copyright  2021 by MarHaj at https://github.com/MarHaj/
+    under GNU General Public Licence version 3 or later:
+    https://www.gnu.org/licenses/gpl-3.0.txt
+
+    This is free software, and you are welcome to redistribute it
+    under conditions of GNU GPL Licence.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty
+    of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+    See the GNU General Public License for more details.
+_EOF_
 }
 ########################################
 
@@ -144,15 +159,6 @@ Requirements:
   External programs required by TidHub:
     Tiddlywiki on Node.js, awk, sed, pgrep, ss|netstat
     xdg-open|x-wwwbrowser|sensible-browser
-
-Copyright notice:
-    Copyright  2021 MarHaj at https://github.com/MarHaj/
-    under GNU General Public Licence version 3 or later:
-    https://www.gnu.org/licenses/gpl-3.0.txt
-
-    This program comes with ABSOLUTELY NO WARRANTY.
-    This is free software, and you are welcome to redistribute it
-    under conditions of GNU GPL Licence.
 _EOF_
 }
 ########################################
@@ -244,6 +250,7 @@ mk_wiki_status () {
     echo "${line[0]},${line[1]},${line[2]},${line[3]}"
   done <<< $(merge_csv)
 }
+########################################
 
 ########################################
 # Prints formatted wiki status with header and footer
@@ -535,7 +542,7 @@ stop_wikis () {
 
 
 ########################################
-### Main
+# Main
 ########################################
 main () {
 # Prepare

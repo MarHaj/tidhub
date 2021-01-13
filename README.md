@@ -6,14 +6,18 @@ TidHub is a simple bash script that greatly simplifies management of wikis on yo
 
 TidHub utilizes wiki keys list that is stored in a very simple config file. The config file template is created (if the user interactively agrees) by the program itself. You only have to edit the template.
 
+**Remark**: If you are reading this on GitHub, you are looking at the one-way-only mirror of my TidHub local Fossil repository. It's just a way I brought TidHub into FOSS community.
+
 ## Functionality
 
-TidHub
+TidHub implements these daily wikis management tasks:
 
-* **Starts** all|selected wikis in the background while automatically chooses tcp port to be listened.
-* **Views** all|selected wikis in the default browser as http://localhost:port page.
-* **Stops** all|selected wikis while automatically finds appropriate pid to be killed.
-* **Prints** info status of all preconfigured wikis: key, path, pid, port in one well-arranged table.
+* **Starts** all|selected wikis in the background while automatically chooses `tcp` port to be listened.
+* **Views** all|selected wikis in the default browser as `http://localhost:port` page.
+* **Stops** all|selected wikis while automatically finds appropriate `pid` to be killed.
+* **Prints** info status of all preconfigured wikis: `key`, `path`, `pid`, `port` in one well-arranged table.
+
+I've decided not to include Tiddlywiki Node.js `--init server` command into TidHub, so you have to create directory of server-related components without the Tidhub support. For this see [Installing Tiddlywiki on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js).
 
 TidHub has also quite detailed documentation about program usage and config file setup.
 
@@ -27,13 +31,14 @@ TidHub has also quite detailed documentation about program usage and config file
 ## Installation and running
 
 1. Copy or move `tidhub.sh` into some directory on your PATH. I prefer either `~/bin/` or `~/.local/bin/`
-2. cd into this directory and make `tidhub.sh` file permission executable (e.g. chmod u+x `tidhub.sh`)
-3. Write into your terminal: `tidhub.sh` and you will be presented with program usage options or — if configuration file is missing — with an offer to create config file template.
+2. Make `tidhub.sh` file permission executable (e.g. chmod u+x `tidhub.sh`)
+3. Run it: write into your terminal: `tidhub.sh` and you will be presented with program usage options or — if configuration file is missing — with an offer to create config file template.
 
 ## Timeline
 
 * Project started on 2020-12-19.
-* Version 0.1.0 — all intended functionalities has been implemented — on 2021-01-03.
+* All intended functionalities has been implemented on 2021-01-03.
+* Public version 1.0.0 released on 2021-01-13.
 
 ## Alternatives
 
@@ -43,12 +48,12 @@ TidHub has also quite detailed documentation about program usage and config file
 
 Special thanks to
 
-* Node.js Tiddlywiki developers - running several wikis on my desktop is easy as going to the hell (going to the heaven is rather difficult, isn't it?)
-* Fossil VCS developers - my projects versions control is a fun childish play.
+* Node.js Tiddlywiki developers: running several wikis on my desktop is easy as going to the hell (going to the heaven is rather difficult, isn't it?)
+* Fossil VCS developers: my projects versions control is a fun childish play.
 
 ## Copyright notice
 
-Copyright  2021 MarHaj at https://github.com/MarHaj/
+Copyright  2021 MarHaj at https://github.com/MarHaj/tidhub
 under GNU General Public Licence version 3 or any later version, see <https://www.gnu.org/licenses/gpl-3.0.txt>
 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3 or any later version.

@@ -5,13 +5,13 @@
 ########################################
 
 declare -A WIKI # declare user defined associative array
-rcfile=~/.config/tidhub/tidhubrc # path to config file to be sourced from here
+rcfile=~/.config/tidhub/tidhubrc # path to config file containing WIKI array
 rctempl="# This file is sourced from tidhub.sh
 
-# User wiki associative array definition: WIKI[key]=value.
-# 'Key' is the unique user defined identifier of user's wiki instance.
-# 'Value' is the path to the wiki instance — i.e. to the directory,
-# where 'tiddlywiki.info' file is at the top.
+# This file contains wiki associative array definition: WIKI[key]=value.
+#   'Key'   is the unique user defined identifier of user's wiki instance.
+#   'Value' is the path to the wiki instance — i.e. to the directory
+#           where 'tiddlywiki.info' file is at the top.
 
 WIKI[hnts]=~/Notes/home_notes/
 WIKI[wnts]=~/Notes/work_notes/
@@ -33,10 +33,10 @@ wiki_status_csv="" # wiki status CSV list
 ########################################
 print_version () {
   cat << _EOF_
-Version: 0.1.0, date 2021-01-03
+Version: 1.0.0, date 2021-01-13
 
 Copyright notice:
-    Copyright  2021 by MarHaj at https://github.com/MarHaj/
+    Copyright  2021 by MarHaj at https://github.com/MarHaj/tidhub
     under GNU General Public Licence version 3 or later:
     https://www.gnu.org/licenses/gpl-3.0.txt
 

@@ -85,6 +85,7 @@ _EOF_
 ########################################
 check_rc () {
   local rcdir="${rcfile%/*}"
+
   if [[ ! -r "${rcfile}" ]]; then
     echo "Required config file '$rcfile' is missing." >&2
     read -n 1 -p "Can I create it? Reply: y|n > "
@@ -188,13 +189,12 @@ conf2csv () {
 #   STDOUT: CSV list of running wikis: ,path,pid,port
 #
 # Requires:
-#   EXT: pgrep, awk, sed
+#   EXT: pgrep, awk
 ########################################
 live2csv () {
 # output from $(pgrep -a node)
   pgrep -a node | \
-    awk '/tiddlywiki/ { print ","$4","$1","$6 }' \
-    | sed 's/port=//'
+    awk '/tiddlywiki/ { sub(/port=/,"",$6) ; print ","$4","$1","$6 }'
 }
 ########################################
 
@@ -208,6 +208,7 @@ live2csv () {
 #
 # Requires:
 #   INT: conf2csv, live2csv
+#   EXT: sed
 ########################################
 merge_csv () {
   local live_line
@@ -276,9 +277,10 @@ print_status () {
   (( $mxpl < 4 )) && mxpl=6 || mxpl=$(( $mxpl + 2 ))
 
 # final output
-  echo -e "--------\n${header}\n${wiki_status_csv}" | \
-    awk -F, '{ printf "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 }'
-  echo "--------"
+  echo -e "${header}\n${wiki_status_csv}" | \
+    awk -F, 'BEGIN { print "--------" } \
+      { printf "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 } \
+      END { print "--------" }'
   (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
 }
 ########################################
@@ -358,9 +360,6 @@ view_wikis () {
 ########################################
 # Find first free TCP port from defined range
 #
-# Globals:
-#   wiki_status_csv: used
-#
 # Arguments:
 #   $1: name of the array of tcp ports range
 #   $2: name of the array with already listening tcp ports
@@ -372,14 +371,12 @@ view_wikis () {
 # RETURNS:
 #   return 0: success
 #   exit 2: no free TCP port in the range
-#
-# Reguires:
-#   EXT: ss, awk
 ########################################
 get_free_port () {
   local -n range=$1 # referenced array of ports to select from
   local -n busy=$2  # referenced array of listening ports
   local i j
+  local found_flag
 
   for i in "${range[@]}"; do # loop through range tcp values
     found_flag="true"
@@ -407,7 +404,7 @@ get_free_port () {
 #   [keylist]: of wikis to run, default is all
 #
 # OUTPUTS:
-#   STDOUT: total count of started wikis
+#   STDOUT: list of started wikis + total count
 #   STDERR: if (key path) and (key port) arrays are of unequal lengths
 #   STDERR: if neither ss|netstat is not installed
 #
@@ -424,10 +421,10 @@ start_wikis () {
   local tcp_busy # array of already listening ports
   local started=0 # total started count
   local line # line array
-  local wport
-  local key
-  declare -A path_arr
-  declare -A port_arr
+  local wport # wiki port
+  local key # wiki key
+  declare -A path_arr # associative array key->path
+  declare -A port_arr # associative array key->port
 
 # Get busy tcp_busy with ss|nestat
   wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
@@ -435,8 +432,7 @@ start_wikis () {
     && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
     && exit 3
   tcp_busy=( $(echo "$wport" \
-    | awk '/LISTEN/ { print $4 }' \
-    | awk -F: '$2 ~ /[0-9]+/ { print $2 }') )
+    | awk 'NR > 1 { sub(/.*:/,"",$4); print $4 }') )
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )
@@ -493,13 +489,14 @@ start_wikis () {
 #   [keylist]: space separated list of wikis key to stop, default is stop all
 #
 # Outputs:
-#   STDOUT: total count of stopped wikis
+#   STDOUT: list of stopped wikis + total count
 ########################################
 stop_wikis () {
   local killed=0 # total killed count
   declare -A pids_arr # associative array ( key pid ) of running & conf wikis
   local line
   local pid
+  local i
 
   # Kill all running wikis (having pid) including those not configured
   if [[ $# -eq 0 ]]; then

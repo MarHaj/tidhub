@@ -432,7 +432,7 @@ start_wikis () {
     && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
     && exit 3
   tcp_busy=( $(echo "$wport" \
-    | awk 'NR > 1 { sub(/.*:/,"",$4); print $4 }') )
+    | awk 'NR > 1 && $4 !~ /::/ { sub(/.*:/,"",$4); print $4 }') )
 
 # Make path_arr (key path) and port_arr (key port) for wikis available to start
   while IFS="," read -a line; do # array=( key path pid port )

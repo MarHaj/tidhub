@@ -87,7 +87,7 @@ check_rc () {
   local rcdir="${rcfile%/*}"
 
   if [[ ! -r "${rcfile}" ]]; then
-    echo "Required config file '$rcfile' is missing." >&2
+    echo "ERR: required config file '$rcfile' is missing." >&2
     read -n 1 -p "Can I create it? Reply: y|n > "
     echo ""
     if [[ $REPLY == n ]]; then
@@ -99,11 +99,11 @@ check_rc () {
         echo -e  "\nFile '$rcfile' successfully created."
         echo "You should edit it to reflect your own wikis placement."
       else
-        echo -e "\nUnable to create '$rcfile'. Something is wrong." >&2
+        echo -e "\nERR: unable to create '$rcfile'. Something is wrong." >&2
         exit 1
       fi
     else
-      echo -e "\nAnswer unregognized." >&2
+      echo -e "\nERR: reply unregognized." >&2
       exit 2
     fi
   fi
@@ -302,13 +302,13 @@ print_status () {
 ########################################
 run_browser () {
   local url=$1
-  local msg="Failed requirement:
- 'xdg-open'|'x-www-browser'|'sensible-browser' installed"
+  local msg="required app
+ 'xdg-open'|'x-www-browser'|'sensible-browser' not installed."
 
   xdg-open $url 2>/dev/null \
   || x-www-browser $url 2>/dev/null \
   || sensible-browser $url 2>/dev/null \
-  || ( echo "$msg" >&2; exit 3 )
+  || ( echo "ERR: $msg" >&2; exit 3 )
 }
 
 ########################################
@@ -389,7 +389,7 @@ get_free_port () {
       return 0 # on the first occurrence of free port
     fi
   done
-  echo "No free TCP port has been found in range ${range[@]}" >&2
+  echo "ERR: no free TCP port has been found in the range ${range[@]}." >&2
   exit 2 # cannot continue because no free port in the range has been found
 }
 ########################################
@@ -429,7 +429,7 @@ start_wikis () {
 # Get busy tcp_busy with ss|nestat
   wport=$(ss -tln 2>/dev/null || netstat -tln 2>/dev/null)
   [[ $? -ne 0 ]] \
-    && echo "Failed requirement: 'ss'|'netstat' installed" >&2 \
+    && echo "ERR: required app 'ss'|'netstat' not installed." >&2 \
     && exit 3
   tcp_busy=( $(echo "$wport" \
     | awk 'NR > 1 && $4 !~ /::/ { sub(/.*:/,"",$4); print $4 }') )
@@ -446,7 +446,7 @@ start_wikis () {
 
 # Verify for each case arrays are of equal length
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \
-    && echo "Unexpected error" >&2 \
+    && echo "ERR: unexpected error." >&2 \
     && exit 2
 
 # Start all wikis available to start in bgr
@@ -575,7 +575,7 @@ case $1 in
     view_wikis "$@"
     ;;
   *)
-    [[ -z $1 ]] || echo -e "Unregognized input '$1'\n" >&2 && print_usage
+    [[ -z $1 ]] || echo -e "ERR: unregognized input '$1'.\n" >&2 && print_usage
     ;;
 esac
 }

@@ -33,7 +33,7 @@ wiki_status_csv="" # wiki status CSV list
 ########################################
 print_version () {
   cat << _EOF_
-Version: 1.0.0, date 2021-01-13
+Version: 1.0.1, date 2021-01-16
 
 Copyright notice:
     Copyright  2021 by MarHaj at https://github.com/MarHaj/tidhub

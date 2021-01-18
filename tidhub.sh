@@ -166,6 +166,7 @@ _EOF_
 
 ########################################
 # Make CSV config list from wiki array
+# and remove element with repeating value (path) if exists
 #
 # Globals:
 #   WIKI: array used
@@ -174,7 +175,18 @@ _EOF_
 #   STDOUT: CSV list of configured wiki: key,path,,
 ########################################
 conf2csv () {
-  local i
+  local i j
+
+# clear WIKI from posssible repeating paths
+  for i in ${!WIKI[@]}; do
+    for j in ${!WIKI[@]}; do
+      if [[ $i != $j ]]; then
+        [[ "${WIKI[$i]}" == "${WIKI[$j]}" ]] && unset 'WIKI[$j]'
+      fi
+    done
+  done
+
+# make csv
   for i in ${!WIKI[@]}; do
     echo "$i,"${WIKI[$i]}",,"
   done

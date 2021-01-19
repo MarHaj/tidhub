@@ -26,7 +26,7 @@ TidHub has also quite detailed documentation about program usage and config file
 * Linux
 [Tiddlywiki on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js) (obviously) and at the least one directory containing Tiddlywiki server-related components
 * bash >= 4
-* awk, sed, ss|netstat, grep, pgrep, xdg-open|x-wwwbrowser|sensible-browser
+* awk, sed, ss|netstat, pgrep, xdg-open|x-wwwbrowser|sensible-browser
 
 ## Installation and running
 

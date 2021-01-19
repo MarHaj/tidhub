@@ -454,7 +454,7 @@ start_wikis () {
     port_arr[$key]=$wport
     tcp_busy+=($wport) # after assignment make port looks like busy
   done <<< "$(echo "$wiki_status_csv" \
-    | grep -v ',WNA,\|[0-9]\+$')" # !! wikis ready to start (not WNA or running)
+    | awk -F, '$2 != "WNA" && $4 !~ /^[0-9]+$/')" # don't start WNA or running
 
 # Verify for each case arrays are of equal length
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \

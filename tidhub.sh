@@ -251,6 +251,9 @@ merge_csv () {
 # Globals:
 #   wiki_status_csv: changed
 #
+# Outputs:
+#   csv list: key,path,pid,port
+#
 # Requires:
 #   INT: merge_csv
 ########################################
@@ -275,7 +278,7 @@ mk_wiki_status () {
 #   STDOUT: CSV list: key,path,pid,port + footer if WMA found
 #
 # Requires:
-#   EXT: awk, grep
+#   EXT: awk
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT"
@@ -290,10 +293,12 @@ print_status () {
 
 # final output
   echo -e "${header}\n${wiki_status_csv}" | \
-    awk -F, 'BEGIN { print "--------" } \
-      { printf "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4 } \
-      END { print "--------" }'
-  (( $(echo "$wiki_status_csv" | grep -E -c ',WNA,') )) && echo "$footer"
+    awk -F, -v afoot="$footer" \
+      'BEGIN { print "--------" } \
+      { printf( "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4); \
+        if ( $2 == "WNA" ) foot_flag = 1; \
+      } \
+      END { print "--------"; if ( foot_flag ) print afoot}'
 }
 ########################################
 

@@ -452,7 +452,7 @@ start_wikis () {
     path_arr[$key]="${line[1]}"
     wport=$(get_free_port tcp_range tcp_busy)
     port_arr[$key]=$wport
-    tcp_busy+=($wport) # after assignment make port looks like busy
+    tcp_busy+=($wport) # after port_arr assignment make port looks like busy
   done <<< "$(echo "$wiki_status_csv" \
     | awk -F, '$2 != "WNA" && $4 !~ /^[0-9]+$/')" # don't start WNA or running
 
@@ -474,17 +474,16 @@ start_wikis () {
 
 # Start wikis according keylist in bgr, prevent multiple starts one key
   while (( $# > 0 )); do # args cycle
-    for key in ${!path_arr[@]}; do
-      if [[ "$1" == "$key" ]]; then
-        tiddlywiki "${path_arr[$key]}" \
-          --listen port=${port_arr[$key]} &>/dev/null &
-        echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
-        sleep 0.5
-        unset path_arr[$key]
-        unset port_arr[$key]
-        (( started+=1 ))
-      fi
-    done
+    key=$1
+    if [[ ${path_arr[$key]} ]]; then
+      tiddlywiki "${path_arr[$key]}" \
+        --listen port=${port_arr[$key]} &>/dev/null &
+      echo "Started wiki $key on '${path_arr[$key]}' port ${port_arr[$key]}"
+      sleep 0.5
+      unset path_arr[$key]
+      unset port_arr[$key]
+      (( started+=1 ))
+    fi
     shift
   done
   echo "Started total: $started"

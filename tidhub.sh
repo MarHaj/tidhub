@@ -246,7 +246,7 @@ merge_csv () {
 
 ########################################
 # Create global wiki_status_csv list
-# If config path does not point to tiddlywiki.info then replace it by 'WNA'.
+# If config path does not point to tiddlywiki.info then add prefix 'WNA: '.
 #
 # Globals:
 #   wiki_status_csv: changed
@@ -262,7 +262,7 @@ mk_wiki_status () {
   wiki_status_csv=""
 
   while IFS=, read -r -a line; do
-    [[ -f "${line[1]}tiddlywiki.info" ]] || line[1]="WNA"
+    [[ -f "${line[1]}tiddlywiki.info" ]] || line[1]="WNA: ${line[1]}"
     echo "${line[0]},${line[1]},${line[2]},${line[3]}"
   done <<< $(merge_csv)
 }
@@ -282,7 +282,7 @@ mk_wiki_status () {
 ########################################
 print_status () {
   local header="KEY,PATH,PID,PORT"
-  local footer="WNA: Wiki Not Avalilable on the path configured"
+  local footer="WNA: this Wiki Not Avalilable on the path configured"
   local mxpl # maximum of paths lengths
 
 # determine max path length for formatting purpose
@@ -296,7 +296,7 @@ print_status () {
     awk -F, -v afoot="$footer" \
       'BEGIN { print "--------" } \
       { printf( "%-8s %-'${mxpl}'s %-6s %-6s \n", $1, $2, $3, $4); \
-        if ( $2 == "WNA" ) foot_flag = 1; \
+        if ( $2 ~ /^WNA:\s/ ) foot_flag = 1; \
       } \
       END { print "--------"; if ( foot_flag ) print afoot}'
 }
@@ -459,7 +459,7 @@ start_wikis () {
     port_arr[$key]=$wport
     tcp_busy+=($wport) # after port_arr assignment make port looks like busy
   done <<< "$(echo "$wiki_status_csv" \
-    | awk -F, '$2 != "WNA" && $4 !~ /^[0-9]+$/')" # don't start WNA or running
+    | awk -F, '$2 !~ /^WNA:\s/ && $4 !~ /^[0-9]+$/')" # don't start WNA or running
 
 # Verify for each case arrays are of equal length
   [[ ${#port_arr[@]} -ne ${#path_arr[@]} ]] \

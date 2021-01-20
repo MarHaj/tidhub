@@ -536,17 +536,16 @@ stop_wikis () {
     done <<< "$wiki_status_csv"
     # Kill them according keylist
     while (( $# > 0 )); do # args cycle
-      for i in ${!pids_arr[@]}; do
-        if [[ "$1" == "$i" ]]; then
-          pid=${pids_arr[$i]}
-          kill $pid || kill -9 $pid \
-            && echo "Stopped wiki $i pid '$pid'" \
-            && sleep 0.5 \
-            && unset pids_arr[$i] \
-            && (( killed+=1 ))
-        fi
-      done
-      shift
+      key=$1
+      pid=${pids_arr[$key]}
+      if [[ $pid ]]; then
+        kill $pid || kill -9 $pid \
+          && echo "Stopped wiki $key pid '$pid'" \
+          && sleep 0.5 \
+          && unset pids_arr[$key] \
+          && (( killed+=1 ))
+       fi
+       shift
     done
   fi
   echo "Stopped total: $killed"

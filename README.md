@@ -38,8 +38,9 @@ TidHub has also quite detailed documentation about program usage and config file
 
 * Project started on 2020-12-19.
 * All intended functionalities has been implemented on 2021-01-03.
-* Public version 1.0.0 released on 2021-01-13.
-* Ver: 1.0.1 minor improvements on 2021-01-16
+* Ver: 1.0.0 released to public on 2021-01-13.
+* Ver: 1.0.1 minor improvements on 2021-01-16.
+* Ver: 1.0.2 minor improvements on 2021-01-20.
 
 ## Alternatives
 

@@ -322,9 +322,9 @@ run_browser () {
   local msg="required app
  'xdg-open'|'x-www-browser'|'sensible-browser' not installed."
 
-  xdg-open $url 2>/dev/null \
-  || x-www-browser $url 2>/dev/null \
-  || sensible-browser $url 2>/dev/null \
+  xdg-open $url 1>/dev/null 2>&1 \
+  || x-www-browser $url 1>/dev/null 2>&1\
+  || sensible-browser $url 1>/dev/null 2>&1\
   || ( echo "ERR: $msg" >&2; exit 3 )
 }
 

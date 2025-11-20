@@ -205,7 +205,7 @@ conf2csv () {
 ########################################
 live2csv () {
 # output from $(pgrep -a node)
-  pgrep -a node | \
+  pgrep -af node | \
     awk '$3 ~ /tiddlywiki$/ { sub(/port=/,"",$6) ; print ","$4","$1","$6 }'
 }
 ########################################

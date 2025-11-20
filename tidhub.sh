@@ -158,7 +158,7 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, pgrep, ss|netstat
+    Tiddlywiki on Node.js, awk, sed, ss|netstat
     xdg-open|x-wwwbrowser|sensible-browser
 _EOF_
 }
@@ -201,11 +201,11 @@ conf2csv () {
 #   STDOUT: CSV list of running wikis: ,path,pid,port
 #
 # Requires:
-#   EXT: pgrep, awk
+#   EXT: awk
 ########################################
 live2csv () {
-# output from $(pgrep -a node)
-  pgrep -af node | \
+# output from $(ps -ao pid, args) containing 'tiddlywiki'
+  ps -ao pid,args | \
     awk '$3 ~ /tiddlywiki$/ { sub(/port=/,"",$6) ; print ","$4","$1","$6 }'
 }
 ########################################

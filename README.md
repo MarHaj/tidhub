@@ -39,6 +39,8 @@ TidHub has also quite detailed documentation about program usage and config file
 * Ver: 1.0.0 released to public on 2021-01-13.
 * Ver: 1.0.1 minor improvements on 2021-01-16.
 * Ver: 1.0.2 minor improvements on 2021-01-20.
+* Ver 1.0.3 dtto
+* Ver: 1.0.4 getting rid of dependency on 'pgrep' on 2025-11-20
 
 ## Alternatives
 

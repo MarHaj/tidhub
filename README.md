@@ -6,8 +6,6 @@ TidHub is a simple bash script that greatly simplifies management of wikis on yo
 
 TidHub utilizes wiki keys list that is stored in a very simple config file. The config file template is created (if the user interactively agrees) by the program itself. You only have to edit the template.
 
-**Remark**: If you are reading this on GitHub, you are looking at the one-way-only mirror of my TidHub local Fossil repository. It's just a way I brought TidHub into FOSS community.
-
 ## Functionality
 
 TidHub implements these daily wikis management tasks:
@@ -26,7 +24,7 @@ TidHub has also quite detailed documentation about program usage and config file
 * Linux
 [Tiddlywiki on Node.js](https://tiddlywiki.com/#Installing%20TiddlyWiki%20on%20Node.js) (obviously) and at the least one directory containing Tiddlywiki server-related components
 * bash >= 4
-* awk, sed, ss|netstat, pgrep, xdg-open|x-wwwbrowser|sensible-browser
+* awk, sed, ss|netstat, xdg-open|x-wwwbrowser|sensible-browser
 
 ## Installation and running
 
@@ -51,7 +49,6 @@ TidHub has also quite detailed documentation about program usage and config file
 Special thanks to
 
 * Node.js Tiddlywiki developers: running several wikis on my desktop is easy as going to the hell (going to the heaven is rather difficult, isn't it?)
-* Fossil VCS developers: my projects versions control is a fun childish play.
 
 ## Copyright notice
 

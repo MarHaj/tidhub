@@ -158,7 +158,7 @@ ${rctempl}
 
 Requirements:
   External programs required by TidHub:
-    Tiddlywiki on Node.js, awk, sed, ss|netstat
+    Tiddlywiki on Node.js, awk, sed, ss|netstat,
     xdg-open|x-wwwbrowser|sensible-browser
 _EOF_
 }
